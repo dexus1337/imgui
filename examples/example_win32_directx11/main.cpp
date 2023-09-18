@@ -1655,6 +1655,7 @@ int main(int, char**)
     style->SeparatorTextBorderSize = 3.f;
     style->SeparatorTextAlign = ImVec2(0.f, 0.5f);
     style->SeparatorTextPadding = ImVec2(20.f, 5.f);
+    style->WindowMinSize = ImVec2(800.f, 600.f);
     style->LogSliderDeadzone = 4.f;
 
     style->Colors[ImGuiCol_Text] = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
@@ -1777,7 +1778,7 @@ int main(int, char**)
 
 		if ( ImGui::BeginMainMenuBar( ) )
 		{
-			float item_width = ImGui::GetContentRegionAvail( ).x / 3;
+			float item_width = ImGui::GetContentRegionAvail( ).x / 4;
 
 			bool set_btn_color = false;
 
@@ -1861,8 +1862,9 @@ int main(int, char**)
 		/* Create Items */
 		if ( selected_tab == 0 )
 		{
-			if ( ImGui::Begin( ( "CREATE ITEMS##WINDOW_CREATE_TEM" ), 0, ImGuiWindowFlags_NoCollapse ) )
+			if ( ImGui::Begin( ( "CREATE ITEMS##WINDOW_CREATE_ITEM" ), 0, ImGuiWindowFlags_NoCollapse ) )
 			{
+                static int selected_item_type = 0;
                 static std::vector< std::pair< const char*, int > > tab_data;
 
                 if ( tab_data.empty( ) )
@@ -1878,6 +1880,7 @@ int main(int, char**)
                     tab_data.push_back( std::make_pair( ( "MUSICKITS" ),tab_data.size( ) ) ); /* 8 */
                     tab_data.push_back( std::make_pair( ( "CASES" ),	tab_data.size( ) ) ); /* 9 */
                     tab_data.push_back( std::make_pair( ( "TOOLS" ),	tab_data.size( ) ) ); /* 10 */
+                    tab_data.push_back( std::make_pair( ( "CUSTOM" ),	tab_data.size( ) ) ); /* 11 */
                 }
 
                 ImGui::PushStyleVar( ImGuiStyleVar_::ImGuiStyleVar_ItemSpacing,         ImVec2( ) );
@@ -1887,9 +1890,7 @@ int main(int, char**)
                 ImGui::PushStyleVar( ImGuiStyleVar_::ImGuiStyleVar_IndentSpacing, 0.f );
                 ImGui::PushStyleVar( ImGuiStyleVar_::ImGuiStyleVar_FrameRounding, 0.f );
 
-                static int create_tab = 0;
-
-                if ( ImGui::BeginChild( ( "##TAB_AREA" ), ImVec2( ImGui::GetContentRegionAvail( ).x / 5, ImGui::GetContentRegionAvail( ).y ), false ) )
+                if ( ImGui::BeginChild( ( "##TAB_AREA" ), ImVec2( ImGui::GetContentRegionAvail( ).x / 7, ImGui::GetContentRegionAvail( ).y ), false ) )
                 {
                     float button_height = ImGui::GetContentRegionAvail( ).y / tab_data.size( );
 
@@ -1897,7 +1898,7 @@ int main(int, char**)
                     {
                         bool set_btn_color = false;
 
-                        if ( create_tab == x.second )
+                        if ( selected_item_type == x.second )
                         {
 				            ImGui::PushStyleColor( ImGuiCol_::ImGuiCol_Button,			button_actived			);
 				            ImGui::PushStyleColor( ImGuiCol_::ImGuiCol_ButtonHovered,	button_actived_hovered	);
@@ -1905,7 +1906,7 @@ int main(int, char**)
                         }
 
                         if (ImGui::Button( x.first, ImVec2( ImGui::GetContentRegionAvail( ).x, button_height ) ) )
-                            create_tab = x.second;
+                            selected_item_type = x.second;
 
                         if ( set_btn_color == true )
                         {
@@ -1921,99 +1922,121 @@ int main(int, char**)
 
                 ImGui::SameLine( );
 
-                ImGui::SameLine( );
-
-                if ( ImGui::BeginChild( ( "##VALUES_AREA" ), ImVec2( ImGui::GetContentRegionAvail( ).x, ImGui::GetContentRegionAvail( ).y ), true ) )
+                if ( ImGui::BeginChild( ( "##VALUES_AREA" ), ImGui::GetContentRegionAvail( ), true ) )
                 {
-                    static int      i_weapon;
-                    static int      i_paintkit;
-                    static bool     b_as_unacknoledged;
+					if ( selected_item_type != tab_data.size( ) - 1 )
+					{
+                        static int selected_item	= 0;
+                        static int selected_type	= 0;
+                        static float itemwidth		= 120.f;
+                        static float typewidth		= 120.f;
+                        static float splitterwidth	= 5.f;
+                        static char item_filer[0x100] = {};
+						static char type_filer[0x100] = {};
+					
+						if ( ImGui::BeginChild( ( "##LISTBOXES_AREA" ), ImVec2( itemwidth + typewidth + splitterwidth + 2.f * ImGui::GetStyle( ).ItemSpacing.x, ImGui::GetContentRegionAvail( ).y ), false ) )
+						{
+							if ( ImGui::BeginChild( ( "##WEAPON_AREA" ), ImVec2( itemwidth, ImGui::GetContentRegionAvail( ).y ), false ) )
+							{
+								ImGui::TextCentered( ( "ITEM" ) );
+						
+								ImGui::PushStyleVar( ImGuiStyleVar_::ImGuiStyleVar_FramePadding,		ImVec2( 4, 4 ) );
+								ImGui::PushStyleVar( ImGuiStyleVar_::ImGuiStyleVar_SelectableTextAlign,	ImVec2( 0.f, 0.5f ) );
 
-                    float f_listwidth = ImGui::GetContentRegionAvail( ).x / 4.5f;
+								ImGui::InputTextWithHint( "##ITEM_FILTER", ( "ITEM FILTER" ), item_filer, 0x100, ImVec2( ImGui::GetContentRegionAvail( ).x, 0 ) );
 
-                    if ( ImGui::BeginChild( ( "##WEAPON_AREA" ), ImVec2( f_listwidth, ImGui::GetContentRegionAvail( ).y ), false ) )
-                    {
-                        ImGui::TextCentered( ( "WEAPON" ) );
+								if ( ImGui::BeginListBox( ( "##ITEM_LIST" ), ImGui::GetContentRegionAvail( ) ) )
+								{
+                                    if ( ImGui::Selectable( ( "AK-47" ), selected_item == 0, ImGuiSelectableFlags_SpanAllColumns ) )
+                                    {
+                                        selected_item = 0;
+                                    }
                         
-                        ImGui::PushStyleVar( ImGuiStyleVar_::ImGuiStyleVar_FramePadding, ImVec2( 0, 4 ) );
+                                    if ( ImGui::Selectable( ( "M4A4" ), selected_item == 1 ) )
+                                    {
+                                        selected_item = 1;
+                                    }
 
-                        if ( ImGui::BeginListBox( ( "##WEAPONS_LIST" ), ImGui::GetContentRegionAvail( ) ) )
-                        {
-                            if ( ImGui::Selectable( ( "AK-47" ), i_weapon == 0, ImGuiSelectableFlags_SpanAllColumns ) )
-                            {
-                                i_weapon = 0;
-                            }
-                        
-                            if ( ImGui::Selectable( ( "M4A4" ), i_weapon == 1 ) )
-                            {
-                                i_weapon = 1;
-                            }
-
-                            if ( ImGui::Selectable( ( "DESERT EAGLE" ), i_weapon == 2 ) )
-                            {
-                                i_weapon = 2;
-                            }
+                                    if ( ImGui::Selectable( ( "DESERT EAGLE" ), selected_item == 2 ) )
+                                    {
+                                        selected_item = 2;
+                                    }
                             
-                            ImGui::EndListBox( );
-                        }
-                        
-                        ImGui::PopStyleVar( 1 );
+									ImGui::EndListBox( );
+								}
+             
+								ImGui::PopStyleVar( 2 );
                     
-                        ImGui::EndChild( );
-                    }
-                    
-                    ImGui::SameLine( );
+								ImGui::EndChild( );
+							}
 
-                    if ( ImGui::BeginChild( ( "##PAINTKIT_AREA" ), ImVec2( f_listwidth, ImGui::GetContentRegionAvail( ).y ), false ) )
-                    {
-                        ImGui::TextCentered( ( "SKIN" ) );
+							ImGui::Splitter( ( "##SPLITER_TO_TYPE" ), false, splitterwidth, &itemwidth );
+					
+                            if ( ImGui::BeginChild( ( "##PROP_AREA" ), ImVec2( typewidth, ImGui::GetContentRegionAvail( ).y ), false ) )
+							{
+								ImGui::TextCentered( ( "TYPE" ) );
+					
+								ImGui::PushStyleVar( ImGuiStyleVar_::ImGuiStyleVar_FramePadding,		ImVec2( 4, 4 ) );
+								ImGui::PushStyleVar( ImGuiStyleVar_::ImGuiStyleVar_SelectableTextAlign,	ImVec2( 0.f, 0.5f ) );
+								
+								ImGui::InputTextWithHint( "##TYPE_FILTER", ( "TYPE FILTER" ), type_filer, 0x100, ImVec2( ImGui::GetContentRegionAvail( ).x, 0 ) );
+
+								if ( ImGui::BeginListBox( ( "##TYPE_LIST" ), ImGui::GetContentRegionAvail( ) ) )
+								{
+                                    if ( ImGui::Selectable( ( "Fire-Serpent" ), selected_type == 0, ImGuiSelectableFlags_SpanAllColumns ) )
+                                    {
+                                        selected_type = 0;
+                                    }
                         
-                        ImGui::PushStyleVar( ImGuiStyleVar_::ImGuiStyleVar_FramePadding, ImVec2( 0, 4 ) );
+                                    if ( ImGui::Selectable( ( "Vulcan" ), selected_type == 1 ) )
+                                    {
+                                        selected_type = 1;
+                                    }
 
-                        if ( ImGui::BeginListBox( ( "##WEAPONS_LIST" ), ImGui::GetContentRegionAvail( ) ) )
-                        {
-                            if ( ImGui::Selectable( ( "Fire-Serpent" ), i_paintkit == 0, ImGuiSelectableFlags_SpanAllColumns ) )
-                            {
-                                i_paintkit = 0;
-                            }
-                        
-                            if ( ImGui::Selectable( ( "Vulcan" ), i_paintkit == 1 ) )
-                            {
-                                i_paintkit = 1;
-                            }
-
-                            if ( ImGui::Selectable( ( "Redline" ), i_paintkit == 2 ) )
-                            {
-                                i_paintkit = 2;
-                            }
+                                    if ( ImGui::Selectable( ( "Redline" ), selected_type == 2 ) )
+                                    {
+                                        selected_type = 2;
+                                    }
                             
-                            ImGui::EndListBox( );
-                        }
-                        
-                        ImGui::PopStyleVar( 1 );
+									ImGui::EndListBox( );
+								}
+             
+								ImGui::PopStyleVar( 2 );
                     
-                        ImGui::EndChild( );
-                    }
+								ImGui::EndChild( );
+							}
+							
+							ImGui::EndChild( );
 
-                    ImGui::SameLine( );
+							ImGui::Splitter( ( "##SPLITER_TO_PROPERTIES" ), false, splitterwidth, &typewidth );
+							
+							ImGui::SameLine( );
+						}
+					}
+					
+					ImVec2 cursor_pos = ImGui::GetCursorPos( );
+					cursor_pos.y += ImGui::GetContentRegionAvail( ).y - 35.f + ImGui::GetStyle( ).FramePadding.y * 2;
+					
+					if ( ImGui::BeginChild( ( "##PROPERTIES_AREA" ), ImVec2( ImGui::GetContentRegionAvail( ).x, ImGui::GetContentRegionAvail( ).y - 35.f ), true ) )
+					{
+						ImGui::TextCentered( ( "PROPERTIES" ) );
 
-                    if ( ImGui::BeginChild( ( "##PROP_AREA" ), ImVec2( ImGui::GetContentRegionAvail( ).x, ImGui::GetContentRegionAvail( ).y - ImGui::GetContentRegionAvail( ).y / 12 ), false ) )
-                    {
-                        ImGui::TextCentered( ( "PROPERTIES" ) );
-                        
-                        ImGui::Checkbox( ( "Show as new" ), &b_as_unacknoledged );
+						ImGui::EndChild( );
+					}
 
-                        ImGui::EndChild( );
-                    }
+					ImGui::SetCursorPos( cursor_pos );
+                    
+				    ImGui::PushStyleColor( ImGuiCol_::ImGuiCol_Button,			button_actived			);
+				    ImGui::PushStyleColor( ImGuiCol_::ImGuiCol_ButtonHovered,	button_actived_hovered	);
 
-                    /*if ( ImGui::Button( "CREATE##CREATE_ITEM", ImGui::GetContentRegionAvail()) )
-                    {
-                    }*/
-                
+					if ( ImGui::Button( ( "CREATE##BUTTON_CREATE" ), ImGui::GetContentRegionAvail( ) ) )
+					{
+					}
+
+                    ImGui::PopStyleColor( 2 );
+
                     ImGui::EndChild( );
-                }
-                
-                ImGui::SameLine( );
+				}
 
                 ImGui::End( );
 			}
@@ -2022,6 +2045,75 @@ int main(int, char**)
 		/* Manage Items */
 		if ( selected_tab == 1 )
 		{
+			if ( ImGui::Begin( ( "MANAGE ITEMS##WINDOW_MANAGE_ITEM" ), 0, ImGuiWindowFlags_NoCollapse ) )
+			{
+                if ( ImGui::BeginChild( ( "##ITEM_AREA" ), ImVec2( ImGui::GetContentRegionAvail( ).x / 7, ImGui::GetContentRegionAvail( ).y ), false ) )
+                {
+                    static char item_filer[0x100] = {};
+                    static int selected_item = 0;
+
+                    ImGui::PushStyleVar( ImGuiStyleVar_::ImGuiStyleVar_FramePadding, ImVec2( 4, 4 ) );
+                    ImGui::PushStyleVar( ImGuiStyleVar_::ImGuiStyleVar_SelectableTextAlign, ImVec2( 0.f, 0.5f ) );
+
+                    ImGui::InputTextWithHint( "##FILTER", ( "FILTER" ), item_filer, 0x100, ImVec2(ImGui::GetContentRegionAvail().x, 0));
+
+                    if ( ImGui::BeginListBox( ( "##LIST" ), ImGui::GetContentRegionAvail( ) ) )
+                    {
+                        if ( ImGui::Selectable( ( "0" ), selected_item == 0, ImGuiSelectableFlags_SpanAllColumns ) )
+                        {
+                            selected_item = 0;
+                        }
+                    
+                        if ( ImGui::Selectable( ( "1" ), selected_item == 1, ImGuiSelectableFlags_SpanAllColumns ) )
+                        {
+                            selected_item = 1;
+                        }
+
+                        if ( ImGui::Selectable( ( "2" ), selected_item == 2, ImGuiSelectableFlags_SpanAllColumns ) )
+                        {
+                            selected_item = 2;
+                        }
+
+                        ImGui::EndListBox( );
+                    }
+
+                    ImGui::PopStyleVar( 2 );
+                    
+                    ImGui::EndChild( );
+                }
+
+                ImGui::SameLine( );
+                
+				ImVec2 cursor_pos = ImGui::GetCursorPos( );
+				cursor_pos.y += ImGui::GetContentRegionAvail( ).y - 35.f + ImGui::GetStyle( ).FramePadding.y * 2;
+					
+				if ( ImGui::BeginChild( ( "##PROPERTIES_AREA" ), ImVec2( ImGui::GetContentRegionAvail( ).x, ImGui::GetContentRegionAvail( ).y - 35.f ), true ) )
+				{
+					ImGui::TextCentered( ( "PROPERTIES" ) );
+
+					ImGui::EndChild( );
+				}
+
+				ImGui::SetCursorPos( cursor_pos );
+                    
+                ImGui::PushStyleColor( ImGuiCol_::ImGuiCol_Button,			button_actived			);
+                ImGui::PushStyleColor( ImGuiCol_::ImGuiCol_ButtonHovered,	button_actived_hovered	);
+
+                if ( ImGui::Button( ( "DELETE##BUTTON_DELETE" ), ImVec2( ImGui::GetContentRegionAvail( ).x / 2, ImGui::GetContentRegionAvail( ).y ) ) )
+                {
+                }
+
+                ImGui::PopStyleColor( 2 );
+                    
+                ImGui::SameLine( );
+
+                if ( ImGui::Button( ( "UPDATE##BUTTON_UPDATE" ), ImGui::GetContentRegionAvail( ) ) )
+                {
+                }
+
+            }
+
+            ImGui::End( );
 		}
 
 		/* Configuration */

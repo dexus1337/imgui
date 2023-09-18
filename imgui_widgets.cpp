@@ -256,6 +256,15 @@ void ImGui::TextUnformatted(const char* text, const char* text_end)
     TextEx(text, text_end, ImGuiTextFlags_NoWidthForLargeClippedText);
 }
 
+void ImGui::Splitter(const char* name, bool split_vertically, float thickness, float* size)
+{
+    ImGui::SameLine( );
+    ImGui::Button( name, ImVec2( split_vertically ? ImGui::GetContentRegionAvail( ).x : thickness, split_vertically ? thickness : ImGui::GetContentRegionAvail( ).y ) );
+    if ( ImGui::IsItemActive( ) )
+        *size += split_vertically ? ImGui::GetIO( ).MouseDelta.y : ImGui::GetIO( ).MouseDelta.x;
+    ImGui::SameLine( );
+}
+
 void ImGui::TextCentered(const char* text)
 {
     auto windowWidth = ImGui::GetWindowSize().x;
@@ -3632,10 +3641,10 @@ bool ImGui::InputTextMultiline(const char* label, char* buf, size_t buf_size, co
     return InputTextEx(label, NULL, buf, (int)buf_size, size, flags | ImGuiInputTextFlags_Multiline, callback, user_data);
 }
 
-bool ImGui::InputTextWithHint(const char* label, const char* hint, char* buf, size_t buf_size, ImGuiInputTextFlags flags, ImGuiInputTextCallback callback, void* user_data)
+bool ImGui::InputTextWithHint(const char* label, const char* hint, char* buf, size_t buf_size, const ImVec2& size, ImGuiInputTextFlags flags, ImGuiInputTextCallback callback, void* user_data)
 {
     IM_ASSERT(!(flags & ImGuiInputTextFlags_Multiline)); // call InputTextMultiline() or  InputTextEx() manually if you need multi-line + hint.
-    return InputTextEx(label, hint, buf, (int)buf_size, ImVec2(0, 0), flags, callback, user_data);
+    return InputTextEx(label, hint, buf, (int)buf_size, size, flags, callback, user_data);
 }
 
 static int InputTextCalcTextLenAndLineCount(const char* text_begin, const char** out_text_end)
