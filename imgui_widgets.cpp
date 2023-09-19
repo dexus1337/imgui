@@ -257,6 +257,24 @@ void ImGui::TextUnformatted(const char* text, const char* text_end)
     TextEx(text, text_end, ImGuiTextFlags_NoWidthForLargeClippedText);
 }
 
+void ImGui::Splitter(const char* name, bool split_vertically, float thickness, float* size)
+{
+    ImGui::SameLine( );
+    ImGui::Button( name, ImVec2( split_vertically ? ImGui::GetContentRegionAvail( ).x : thickness, split_vertically ? thickness : ImGui::GetContentRegionAvail( ).y ) );
+    if ( ImGui::IsItemActive( ) )
+        *size += split_vertically ? ImGui::GetIO( ).MouseDelta.y : ImGui::GetIO( ).MouseDelta.x;
+    ImGui::SameLine( );
+}
+
+void ImGui::TextCentered(const char* text)
+{
+    auto windowWidth = ImGui::GetWindowSize().x;
+    auto textWidth = ImGui::CalcTextSize(text).x;
+
+    ImGui::SetCursorPosX((windowWidth - textWidth) * 0.5f);
+    ImGui::Text(text);
+}
+
 void ImGui::Text(const char* fmt, ...)
 {
     va_list args;
@@ -3624,10 +3642,10 @@ bool ImGui::InputTextMultiline(const char* label, char* buf, size_t buf_size, co
     return InputTextEx(label, NULL, buf, (int)buf_size, size, flags | ImGuiInputTextFlags_Multiline, callback, user_data);
 }
 
-bool ImGui::InputTextWithHint(const char* label, const char* hint, char* buf, size_t buf_size, ImGuiInputTextFlags flags, ImGuiInputTextCallback callback, void* user_data)
+bool ImGui::InputTextWithHint(const char* label, const char* hint, char* buf, size_t buf_size, const ImVec2& size, ImGuiInputTextFlags flags, ImGuiInputTextCallback callback, void* user_data)
 {
     IM_ASSERT(!(flags & ImGuiInputTextFlags_Multiline)); // call InputTextMultiline() or  InputTextEx() manually if you need multi-line + hint.
-    return InputTextEx(label, hint, buf, (int)buf_size, ImVec2(0, 0), flags, callback, user_data);
+    return InputTextEx(label, hint, buf, (int)buf_size, size, flags, callback, user_data);
 }
 
 static int InputTextCalcTextLenAndLineCount(const char* text_begin, const char** out_text_end)
@@ -3992,16 +4010,16 @@ static bool InputTextFilterCharacter(ImGuiContext* ctx, unsigned int* p_char, Im
     if (flags & ImGuiInputTextFlags_CallbackCharFilter)
     {
         ImGuiContext& g = *GImGui;
-        ImGuiInputTextCallbackData callback_data;
-        callback_data.Ctx = &g;
-        callback_data.EventFlag = ImGuiInputTextFlags_CallbackCharFilter;
-        callback_data.EventChar = (ImWchar)c;
-        callback_data.Flags = flags;
-        callback_data.UserData = user_data;
-        if (callback(&callback_data) != 0)
+        ImGuiInputTextCallbackData message_data;
+        message_data.Ctx = &g;
+        message_data.EventFlag = ImGuiInputTextFlags_CallbackCharFilter;
+        message_data.EventChar = (ImWchar)c;
+        message_data.Flags = flags;
+        message_data.UserData = user_data;
+        if (callback(&message_data) != 0)
             return false;
-        *p_char = callback_data.EventChar;
-        if (!callback_data.EventChar)
+        *p_char = message_data.EventChar;
+        if (!message_data.EventChar)
             return false;
     }
 
@@ -4663,46 +4681,46 @@ bool ImGui::InputTextEx(const char* label, const char* hint, char* buf, int buf_
 
                 if (event_flag)
                 {
-                    ImGuiInputTextCallbackData callback_data;
-                    callback_data.Ctx = &g;
-                    callback_data.EventFlag = event_flag;
-                    callback_data.Flags = flags;
-                    callback_data.UserData = callback_user_data;
+                    ImGuiInputTextCallbackData message_data;
+                    message_data.Ctx = &g;
+                    message_data.EventFlag = event_flag;
+                    message_data.Flags = flags;
+                    message_data.UserData = callback_user_data;
 
                     char* callback_buf = is_readonly ? buf : state->TextA.Data;
-                    callback_data.EventKey = event_key;
-                    callback_data.Buf = callback_buf;
-                    callback_data.BufTextLen = state->CurLenA;
-                    callback_data.BufSize = state->BufCapacityA;
-                    callback_data.BufDirty = false;
+                    message_data.EventKey = event_key;
+                    message_data.Buf = callback_buf;
+                    message_data.BufTextLen = state->CurLenA;
+                    message_data.BufSize = state->BufCapacityA;
+                    message_data.BufDirty = false;
 
                     // We have to convert from wchar-positions to UTF-8-positions, which can be pretty slow (an incentive to ditch the ImWchar buffer, see https://github.com/nothings/stb/issues/188)
                     ImWchar* text = state->TextW.Data;
-                    const int utf8_cursor_pos = callback_data.CursorPos = ImTextCountUtf8BytesFromStr(text, text + state->Stb.cursor);
-                    const int utf8_selection_start = callback_data.SelectionStart = ImTextCountUtf8BytesFromStr(text, text + state->Stb.select_start);
-                    const int utf8_selection_end = callback_data.SelectionEnd = ImTextCountUtf8BytesFromStr(text, text + state->Stb.select_end);
+                    const int utf8_cursor_pos = message_data.CursorPos = ImTextCountUtf8BytesFromStr(text, text + state->Stb.cursor);
+                    const int utf8_selection_start = message_data.SelectionStart = ImTextCountUtf8BytesFromStr(text, text + state->Stb.select_start);
+                    const int utf8_selection_end = message_data.SelectionEnd = ImTextCountUtf8BytesFromStr(text, text + state->Stb.select_end);
 
                     // Call user code
-                    callback(&callback_data);
+                    callback(&message_data);
 
                     // Read back what user may have modified
                     callback_buf = is_readonly ? buf : state->TextA.Data; // Pointer may have been invalidated by a resize callback
-                    IM_ASSERT(callback_data.Buf == callback_buf);         // Invalid to modify those fields
-                    IM_ASSERT(callback_data.BufSize == state->BufCapacityA);
-                    IM_ASSERT(callback_data.Flags == flags);
-                    const bool buf_dirty = callback_data.BufDirty;
-                    if (callback_data.CursorPos != utf8_cursor_pos || buf_dirty)            { state->Stb.cursor = ImTextCountCharsFromUtf8(callback_data.Buf, callback_data.Buf + callback_data.CursorPos); state->CursorFollow = true; }
-                    if (callback_data.SelectionStart != utf8_selection_start || buf_dirty)  { state->Stb.select_start = (callback_data.SelectionStart == callback_data.CursorPos) ? state->Stb.cursor : ImTextCountCharsFromUtf8(callback_data.Buf, callback_data.Buf + callback_data.SelectionStart); }
-                    if (callback_data.SelectionEnd != utf8_selection_end || buf_dirty)      { state->Stb.select_end = (callback_data.SelectionEnd == callback_data.SelectionStart) ? state->Stb.select_start : ImTextCountCharsFromUtf8(callback_data.Buf, callback_data.Buf + callback_data.SelectionEnd); }
+                    IM_ASSERT(message_data.Buf == callback_buf);         // Invalid to modify those fields
+                    IM_ASSERT(message_data.BufSize == state->BufCapacityA);
+                    IM_ASSERT(message_data.Flags == flags);
+                    const bool buf_dirty = message_data.BufDirty;
+                    if (message_data.CursorPos != utf8_cursor_pos || buf_dirty)            { state->Stb.cursor = ImTextCountCharsFromUtf8(message_data.Buf, message_data.Buf + message_data.CursorPos); state->CursorFollow = true; }
+                    if (message_data.SelectionStart != utf8_selection_start || buf_dirty)  { state->Stb.select_start = (message_data.SelectionStart == message_data.CursorPos) ? state->Stb.cursor : ImTextCountCharsFromUtf8(message_data.Buf, message_data.Buf + message_data.SelectionStart); }
+                    if (message_data.SelectionEnd != utf8_selection_end || buf_dirty)      { state->Stb.select_end = (message_data.SelectionEnd == message_data.SelectionStart) ? state->Stb.select_start : ImTextCountCharsFromUtf8(message_data.Buf, message_data.Buf + message_data.SelectionEnd); }
                     if (buf_dirty)
                     {
                         IM_ASSERT((flags & ImGuiInputTextFlags_ReadOnly) == 0);
-                        IM_ASSERT(callback_data.BufTextLen == (int)strlen(callback_data.Buf)); // You need to maintain BufTextLen if you change the text!
-                        InputTextReconcileUndoStateAfterUserCallback(state, callback_data.Buf, callback_data.BufTextLen); // FIXME: Move the rest of this block inside function and rename to InputTextReconcileStateAfterUserCallback() ?
-                        if (callback_data.BufTextLen > backup_current_text_length && is_resizable)
-                            state->TextW.resize(state->TextW.Size + (callback_data.BufTextLen - backup_current_text_length)); // Worse case scenario resize
-                        state->CurLenW = ImTextStrFromUtf8(state->TextW.Data, state->TextW.Size, callback_data.Buf, NULL);
-                        state->CurLenA = callback_data.BufTextLen;  // Assume correct length and valid UTF-8 from user, saves us an extra strlen()
+                        IM_ASSERT(message_data.BufTextLen == (int)strlen(message_data.Buf)); // You need to maintain BufTextLen if you change the text!
+                        InputTextReconcileUndoStateAfterUserCallback(state, message_data.Buf, message_data.BufTextLen); // FIXME: Move the rest of this block inside function and rename to InputTextReconcileStateAfterUserCallback() ?
+                        if (message_data.BufTextLen > backup_current_text_length && is_resizable)
+                            state->TextW.resize(state->TextW.Size + (message_data.BufTextLen - backup_current_text_length)); // Worse case scenario resize
+                        state->CurLenW = ImTextStrFromUtf8(state->TextW.Data, state->TextW.Size, message_data.Buf, NULL);
+                        state->CurLenA = message_data.BufTextLen;  // Assume correct length and valid UTF-8 from user, saves us an extra strlen()
                         state->CursorAnimReset();
                     }
                 }
@@ -4740,18 +4758,18 @@ bool ImGui::InputTextEx(const char* label, const char* hint, char* buf, int buf_
         IM_ASSERT(apply_new_text_length >= 0);
         if (is_resizable)
         {
-            ImGuiInputTextCallbackData callback_data;
-            callback_data.Ctx = &g;
-            callback_data.EventFlag = ImGuiInputTextFlags_CallbackResize;
-            callback_data.Flags = flags;
-            callback_data.Buf = buf;
-            callback_data.BufTextLen = apply_new_text_length;
-            callback_data.BufSize = ImMax(buf_size, apply_new_text_length + 1);
-            callback_data.UserData = callback_user_data;
-            callback(&callback_data);
-            buf = callback_data.Buf;
-            buf_size = callback_data.BufSize;
-            apply_new_text_length = ImMin(callback_data.BufTextLen, buf_size - 1);
+            ImGuiInputTextCallbackData message_data;
+            message_data.Ctx = &g;
+            message_data.EventFlag = ImGuiInputTextFlags_CallbackResize;
+            message_data.Flags = flags;
+            message_data.Buf = buf;
+            message_data.BufTextLen = apply_new_text_length;
+            message_data.BufSize = ImMax(buf_size, apply_new_text_length + 1);
+            message_data.UserData = callback_user_data;
+            callback(&message_data);
+            buf = message_data.Buf;
+            buf_size = message_data.BufSize;
+            apply_new_text_length = ImMin(message_data.BufTextLen, buf_size - 1);
             IM_ASSERT(apply_new_text_length <= buf_size);
         }
         //IMGUI_DEBUG_PRINT("InputText(\"%s\"): apply_new_text length %d\n", label, apply_new_text_length);

@@ -458,7 +458,7 @@ void ImDrawList::_PopUnusedDrawCmd()
     }
 }
 
-void ImDrawList::AddCallback(ImDrawCallback callback, void* callback_data)
+void ImDrawList::AddCallback(ImDrawCallback callback, void* message_data)
 {
     IM_ASSERT_PARANOID(CmdBuffer.Size > 0);
     ImDrawCmd* curr_cmd = &CmdBuffer.Data[CmdBuffer.Size - 1];
@@ -469,7 +469,7 @@ void ImDrawList::AddCallback(ImDrawCallback callback, void* callback_data)
         curr_cmd = &CmdBuffer.Data[CmdBuffer.Size - 1];
     }
     curr_cmd->UserCallback = callback;
-    curr_cmd->UserCallbackData = callback_data;
+    curr_cmd->UserCallbackData = message_data;
 
     AddDrawCmd(); // Force a new command after us (see comment below)
 }
