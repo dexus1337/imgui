@@ -26,7 +26,7 @@ UNAME_S := $(shell uname -s)
 
 CXXFLAGS = -std=c++11 -I$(GLFW_DIR)/include -I$(IMGUI_DIR) -I$(IMGUI_DIR)/backends
 CXXFLAGS += -g -Wall -Wformat
-LIBS = -L./ -lglfw3
+LIBS = -L./../libs/glfw -lglfw3
 
 ##---------------------------------------------------------------------
 ## BUILD FLAGS PER PLATFORM
