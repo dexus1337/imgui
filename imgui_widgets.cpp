@@ -5352,6 +5352,20 @@ bool ImGui::ColorEdit4(const char* label, float col[4], ImGuiColorEditFlags flag
     return value_changed;
 }
 
+bool ImGui::ColorEdit4(const char* label, ImU32* col, ImGuiColorEditFlags flags)
+{
+    if (!col)
+        return false;
+
+    ImVec4 src = ColorConvertU32ToFloat4(*col);
+
+    bool result = ColorEdit4(label, reinterpret_cast<float*>(&src), flags);
+
+    *col = ColorConvertFloat4ToU32(src);
+
+    return result;
+}
+
 bool ImGui::ColorPicker3(const char* label, float col[3], ImGuiColorEditFlags flags)
 {
     float col4[4] = { col[0], col[1], col[2], 1.0f };
