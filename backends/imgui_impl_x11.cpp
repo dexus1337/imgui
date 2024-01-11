@@ -47,7 +47,7 @@ IMGUI_IMPL_API void ImGui_ImplX11_Shutdown()
 IMGUI_IMPL_API void ImGui_ImplX11_NewFrame()
 {
 	ImGuiIO& io = ImGui::GetIO();
-    ImGui_ImplWin32_Data* bd = ImGui_ImplWin32_GetBackendData();
+    ImGui_ImplX11_Data* bd = ImGui_ImplX11_GetBackendData();
     IM_ASSERT(bd != nullptr && "Did you call ImGui_ImplWin32_Init()?");
 }
 

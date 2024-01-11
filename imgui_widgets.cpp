@@ -6656,6 +6656,45 @@ bool ImGui::Selectable(const char* label, bool* p_selected, ImGuiSelectableFlags
     return false;
 }
 
+bool ImGui::SelectKey(const char* label, ImGuiKey* p_key, const ImVec2& size)
+{
+	static bool open = false;
+	bool changed = false;
+	
+	const char* text, * text_end;
+    ImFormatStringToTempBuffer(&text, &text_end, "%d", *p_key);
+	
+	if ( Selectable( text, open, 0, size ) )
+		open = !open;
+	
+	ImGui::SameLine( );
+	
+	ImGui::Text( label );
+	
+	if ( open )
+	{
+		if ( ImGui::BeginPopup( "PRESS KEY##IMGUI_SELECT_KEY_POPUP" ) )
+		{
+			ImGui::TextCentered( "PLEASE PRESS A KEY TO SET" );
+			
+			for ( int i = ImGuiKey_NamedKey_BEGIN; i < ImGuiKey_COUNT; i++ ) 
+			{
+				if( ImGui::GetIO( ).KeysDown[ i ] )
+				{
+					*p_key	= static_cast< ImGuiKey >( i );
+					
+					open	= false;
+					changed = true;
+				}
+			}
+			
+			ImGui::EndPopup( );
+		}
+	}
+	
+	return changed;
+}
+
 
 //-------------------------------------------------------------------------
 // [SECTION] Widgets: Typing-Select support
