@@ -6678,39 +6678,47 @@ bool ImGui::Selectable(const char* label, bool* p_selected, ImGuiSelectableFlags
 
 bool ImGui::SelectKey(const char* label, ImGuiKey* p_key, const ImVec2& size)
 {
-	static bool open = false;
+	ImGuiWindow* window = GetCurrentWindow();
+    if (window->SkipItems)
+        return false;
+
+    ImGuiContext& g = *GImGui;
+	const ImGuiStyle& style = g.Style;
+    const ImGuiID id = window->GetID(label);
+    const float w = CalcItemWidth();
+
+    const ImVec2 label_size = CalcTextSize(label, NULL, true);
+    const ImRect frame_bb(window->DC.CursorPos, window->DC.CursorPos + ImVec2(w, label_size.y + style.FramePadding.y * 2.0f));
+    const ImRect total_bb(frame_bb.Min, frame_bb.Max + ImVec2(label_size.x > 0.0f ? style.ItemInnerSpacing.x + label_size.x : 0.0f, 0.0f));
+	
 	bool changed = false;
 	
-	const char* text, * text_end;
-    ImFormatStringToTempBuffer(&text, &text_end, "%d", *p_key);
+	if ( Button( GetKeyName( *p_key ), frame_bb.GetSize() ) )
+	{
+		ImGui::OpenPopup( "press_key_select_key" );
+	}
 	
-	if ( Selectable( text, open, 0, size ) )
-		open = !open;
+	if ( ImGui::BeginPopupModal( "press_key_select_key", NULL, ImGuiWindowFlags_NoDecoration ) )
+	{
+		ImGui::TextCentered( "PLEASE PRESS A KEY TO SET" );
+		
+		for ( int i = ImGuiKey_NamedKey_BEGIN; i < ImGuiKey_COUNT; i++ ) 
+		{
+			if( ImGui::GetIO( ).KeysDown[ i ] )
+			{
+				*p_key	= static_cast< ImGuiKey >( i );
+				
+				changed = true;
+				ImGui::CloseCurrentPopup( );
+			}
+		}
+		
+		ImGui::EndPopup( );
+	}
 	
 	ImGui::SameLine( );
 	
 	ImGui::Text( label );
-	
-	if ( open )
-	{
-		if ( ImGui::BeginPopup( "PRESS KEY##IMGUI_SELECT_KEY_POPUP" ) )
-		{
-			ImGui::TextCentered( "PLEASE PRESS A KEY TO SET" );
-			
-			for ( int i = ImGuiKey_NamedKey_BEGIN; i < ImGuiKey_COUNT; i++ ) 
-			{
-				if( ImGui::GetIO( ).KeysDown[ i ] )
-				{
-					*p_key	= static_cast< ImGuiKey >( i );
-					
-					open	= false;
-					changed = true;
-				}
-			}
-			
-			ImGui::EndPopup( );
-		}
-	}
 	
 	return changed;
 }

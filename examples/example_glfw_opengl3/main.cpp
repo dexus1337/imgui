@@ -153,8 +153,12 @@ int main(int, char**)
 
             if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
                 counter++;
+			
             ImGui::SameLine();
             ImGui::Text("counter = %d", counter);
+			
+			static ImGuiKey mykey = ImGuiKey_LeftAlt;
+			ImGui::SelectKey( "Select Key", &mykey  );
 
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
             ImGui::End();
