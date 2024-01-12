@@ -277,6 +277,26 @@ void ImGui::TextV(const char* fmt, va_list args)
     TextEx(text, text_end, ImGuiTextFlags_NoWidthForLargeClippedText);
 }
 
+void ImGui::TextCentered(const char* fmt, ...)
+{
+	va_list args;
+    va_start(args, fmt);
+    TextCenteredV(fmt, args);
+    va_end(args);
+}
+
+void ImGui::TextCenteredV(const char* fmt, va_list args)
+{ 
+	const char* text, * text_end;
+	ImFormatStringToTempBufferV(&text, &text_end, fmt, args);
+	
+	auto windowWidth = ImGui::GetWindowSize().x;
+    auto textWidth = ImGui::CalcTextSize(text).x;
+
+    ImGui::SetCursorPosX((windowWidth - textWidth) * 0.5f);
+	TextEx(text, text_end, ImGuiTextFlags_None);
+}
+
 void ImGui::TextColored(const ImVec4& col, const char* fmt, ...)
 {
     va_list args;
