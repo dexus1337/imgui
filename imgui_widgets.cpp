@@ -6700,7 +6700,7 @@ bool ImGui::SelectKey(const char* label, ImGuiKey* p_key, const ImVec2& size)
 	
 	if ( ImGui::BeginPopupModal( "press_key_select_key", NULL, ImGuiWindowFlags_NoDecoration ) )
 	{
-		ImGui::TextCentered( "PLEASE PRESS A KEY TO SET" );
+		ImGui::TextCentered( "PLEASE PRESS A KEY..." );
 		
 		for ( int i = ImGuiKey_NamedKey_BEGIN; i < ImGuiKey_COUNT; i++ ) 
 		{
