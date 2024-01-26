@@ -305,6 +305,21 @@ void ImGui::TextColored(const ImVec4& col, const char* fmt, ...)
     va_end(args);
 }
 
+void ImGui::TextColoredV(ImU32 col, const char* fmt, va_list args)
+{
+    PushStyleColor(ImGuiCol_Text, col);
+    TextV(fmt, args);
+    PopStyleColor();
+}
+
+void ImGui::TextColored(ImU32 col, const char* fmt, ...)
+{
+    va_list args;
+    va_start(args, fmt);
+    TextColoredV(col, fmt, args);
+    va_end(args);
+}
+
 void ImGui::TextColoredV(const ImVec4& col, const char* fmt, va_list args)
 {
     PushStyleColor(ImGuiCol_Text, col);
