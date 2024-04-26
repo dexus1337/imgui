@@ -6733,7 +6733,7 @@ bool ImGui::SelectKey(const char* label, ImGuiKey* p_key, const ImVec2& size)
 	
 	ImGui::SameLine( );
 	
-	ImGui::Text( label );
+	ImGui::TextUnformatted( label, FindRenderedTextEnd( label ) );
 	
 	return changed;
 }

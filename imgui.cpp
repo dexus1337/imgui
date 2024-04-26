@@ -5500,6 +5500,31 @@ ImVec2 ImGui::CalcTextSize(const char* text, const char* text_end, bool hide_tex
     return text_size;
 }
 
+ImVec2 ImGui::CalcTextSize(const char* text, const char* text_end = NULL, int size)
+{
+    ImGuiContext& g = *GImGui;
+
+    const char* text_display_end;
+    if (hide_text_after_double_hash)
+        text_display_end = FindRenderedTextEnd(text, text_end);      // Hide anything after a '##' string
+    else
+        text_display_end = text_end;
+
+    ImFont* font = g.Font;
+    if (text == text_display_end)
+        return ImVec2(0.0f, size);
+    ImVec2 text_size = font->CalcTextSizeA(size, FLT_MAX, -1.f, text, text_display_end, NULL);
+
+    // Round
+    // FIXME: This has been here since Dec 2015 (7b0bf230) but down the line we want this out.
+    // FIXME: Investigate using ceilf or e.g.
+    // - https://git.musl-libc.org/cgit/musl/tree/src/math/ceilf.c
+    // - https://embarkstudios.github.io/rust-gpu/api/src/libm/math/ceilf.rs.html
+    text_size.x = IM_TRUNC(text_size.x + 0.99999f);
+
+    return text_size;
+}
+
 // Find window given position, search front-to-back
 // FIXME: Note that we have an inconsequential lag here: OuterRectClipped is updated in Begin(), so windows moved programmatically
 // with SetWindowPos() and not SetNextWindowPos() will have that rectangle lagging by a frame at the time FindHoveredWindow() is
