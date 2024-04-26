@@ -5500,7 +5500,7 @@ ImVec2 ImGui::CalcTextSize(const char* text, const char* text_end, bool hide_tex
     return text_size;
 }
 
-ImVec2 ImGui::CalcTextSizeForced(int size, const char* text, const char* text_end = NULL, bool hide_text_after_double_hash = false)
+ImVec2 ImGui::CalcTextSizeForced(int size, const char* text, const char* text_end, bool hide_text_after_double_hash)
 {
     ImGuiContext& g = *GImGui;
 
