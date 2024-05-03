@@ -6772,12 +6772,13 @@ bool ImGui::SelectKey(const char* label, ImGuiKey* p_key, const ImVec2& size)
 	
 	if ( Button( GetKeyName( *p_key ), frame_bb.GetSize() ) )
 	{
-		ImGui::OpenPopup( "press_key_select_key" );
+		ImGui::OpenPopup( "SELECT KEY##press_key_select_key", ImGuiPopupFlags_NoReopen );
 	}
 	
-	if ( ImGui::BeginPopupModal( "press_key_select_key", NULL, ImGuiWindowFlags_NoDecoration ) )
+	if ( ImGui::BeginPopupModal( "SELECT KEY##press_key_select_key", NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse ) )
 	{
-		ImGui::TextCentered( "PLEASE PRESS A KEY..." );
+        ImGui::GetIO( ).MouseDrawCursor = false;
+        ImGui::SetCursorPosY( ImGui::GetContentRegionAvail( ).y / 2 );
 		
 		for ( int i = ImGuiKey_NamedKey_BEGIN; i < ImGuiKey_COUNT; i++ ) 
 		{
@@ -6787,8 +6788,11 @@ bool ImGui::SelectKey(const char* label, ImGuiKey* p_key, const ImVec2& size)
 				
 				changed = true;
 				ImGui::CloseCurrentPopup( );
+                ImGui::GetIO( ).MouseDrawCursor = true;
 			}
 		}
+
+        ImGui::TextCenteredV( "PLEASE PRESS A KEY...", 0 );
 		
 		ImGui::EndPopup( );
 	}

@@ -1947,7 +1947,7 @@ int main(int, char**)
 								ImGui::PushStyleVar( ImGuiStyleVar_::ImGuiStyleVar_FramePadding,		ImVec2( 4, 4 ) );
 								ImGui::PushStyleVar( ImGuiStyleVar_::ImGuiStyleVar_SelectableTextAlign,	ImVec2( 0.f, 0.5f ) );
 
-								ImGui::InputTextWithHint( "##ITEM_FILTER", ( "ITEM FILTER" ), item_filer, 0x100, ImVec2( ImGui::GetContentRegionAvail( ).x, 0 ) );
+								//ImGui::InputTextWithHint( "##ITEM_FILTER", ( "ITEM FILTER" ), item_filer, 0x100, ImVec2( ImGui::GetContentRegionAvail( ).x, 0 ) );
 
 								if ( ImGui::BeginListBox( ( "##ITEM_LIST" ), ImGui::GetContentRegionAvail( ) ) )
 								{
@@ -1983,7 +1983,7 @@ int main(int, char**)
 								ImGui::PushStyleVar( ImGuiStyleVar_::ImGuiStyleVar_FramePadding,		ImVec2( 4, 4 ) );
 								ImGui::PushStyleVar( ImGuiStyleVar_::ImGuiStyleVar_SelectableTextAlign,	ImVec2( 0.f, 0.5f ) );
 								
-								ImGui::InputTextWithHint( "##TYPE_FILTER", ( "TYPE FILTER" ), type_filer, 0x100, ImVec2( ImGui::GetContentRegionAvail( ).x, 0 ) );
+                                //ImGui::InputTextWithHint( "##TYPE_FILTER", ( "TYPE FILTER" ), type_filer, 0x100, ImVec2( ImGui::GetContentRegionAvail( ).x, 0 ) );
 
 								if ( ImGui::BeginListBox( ( "##TYPE_LIST" ), ImGui::GetContentRegionAvail( ) ) )
 								{
@@ -2059,7 +2059,7 @@ int main(int, char**)
                     ImGui::PushStyleVar( ImGuiStyleVar_::ImGuiStyleVar_FramePadding, ImVec2( 4, 4 ) );
                     ImGui::PushStyleVar( ImGuiStyleVar_::ImGuiStyleVar_SelectableTextAlign, ImVec2( 0.f, 0.5f ) );
 
-                    ImGui::InputTextWithHint( "##FILTER", ( "FILTER" ), item_filer, 0x100, ImVec2(ImGui::GetContentRegionAvail().x, 0));
+                    // ImGui::InputTextWithHint( "##FILTER", ( "FILTER" ), item_filer, 0x100, ImVec2(ImGui::GetContentRegionAvail().x, 0));
 
                     if ( ImGui::BeginListBox( ( "##LIST" ), ImGui::GetContentRegionAvail( ) ) )
                     {
