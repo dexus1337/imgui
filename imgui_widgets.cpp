@@ -6780,7 +6780,7 @@ bool ImGui::SelectKey(const char* label, ImGuiKey* p_key, const ImVec2& size)
         ImGui::GetIO( ).MouseDrawCursor = false;
         ImGui::SetCursorPosY( ImGui::GetContentRegionAvail( ).y / 2 );
 		
-		for ( int i = ImGuiKey_NamedKey_BEGIN; i < ImGuiKey_COUNT; i++ ) 
+		for ( int i = ImGuiKey_NamedKey_END - 1; i >= ImGuiKey_NamedKey_BEGIN; i-- )
 		{
 			if( ImGui::GetIO( ).KeysDown[ i ] )
 			{
@@ -6792,8 +6792,16 @@ bool ImGui::SelectKey(const char* label, ImGuiKey* p_key, const ImVec2& size)
 			}
 		}
 
-        ImGui::TextCenteredV( "PLEASE PRESS A KEY...", 0 );
+        ImGui::SeparatorText( "" );
+
+        ImGui::Spacing( );
+
+        ImGui::TextCentered( "PLEASE PRESS A KEY..." );
 		
+        ImGui::Spacing( );
+
+        ImGui::SeparatorText( "" );
+
 		ImGui::EndPopup( );
 	}
 	
