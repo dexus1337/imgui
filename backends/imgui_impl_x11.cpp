@@ -1,12 +1,14 @@
 #include "imgui.h"
 #ifndef IMGUI_DISABLE
 #include "imgui_impl_x11.h"
+#include <X11/Xlib.h>
 #include <stdio.h>
 
 
 struct ImGui_ImplX11_Data
 {
-	void*						window_context;
+    Display*                    display;
+	Window                      window;
 	
     ImGui_ImplX11_Data()		{ ::memset((void*)this, 0, sizeof(*this)); }
 };
@@ -20,12 +22,16 @@ static ImGui_ImplX11_Data* ImGui_ImplX11_GetBackendData()
     return ImGui::GetCurrentContext() ? (ImGui_ImplX11_Data*)ImGui::GetIO().BackendPlatformUserData : nullptr;
 }
 
-IMGUI_IMPL_API bool ImGui_ImplX11_Init(void* context)
+IMGUI_IMPL_API bool ImGui_ImplX11_Init(void* display, int window)
 {
 	ImGuiIO& io = ImGui::GetIO();
     IM_ASSERT(io.BackendPlatformUserData == nullptr && "Already initialized a platform backend!");
 
 	ImGui_ImplX11_Data* bd = IM_NEW(ImGui_ImplX11_Data)();
+
+    bd->display = reinterpret_cast< Display* >(display);
+    bd->window  = static_cast< Window >(window);
+
     io.BackendPlatformUserData = (void*)bd;
     io.BackendPlatformName = "imgui_impl_x11";
 	
@@ -49,6 +55,12 @@ IMGUI_IMPL_API void ImGui_ImplX11_NewFrame()
 	ImGuiIO& io = ImGui::GetIO();
     ImGui_ImplX11_Data* bd = ImGui_ImplX11_GetBackendData();
     IM_ASSERT(bd != nullptr && "Did you call ImGui_ImplWin32_Init()?");
+
+    XWindowAttributes attr ={};
+    XGetWindowAttributes( bd->display, bd->window, &attr);
+
+    io.DisplaySize.x = static_cast<float>(attr.width);
+    io.DisplaySize.y = static_cast<float>(attr.height);
 }
 
 

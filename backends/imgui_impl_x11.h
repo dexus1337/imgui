@@ -10,7 +10,7 @@
 #include "imgui.h"      // IMGUI_IMPL_API
 #ifndef IMGUI_DISABLE
 
-IMGUI_IMPL_API bool     ImGui_ImplX11_Init(void* context);
+IMGUI_IMPL_API bool     ImGui_ImplX11_Init(void* display, int window);
 IMGUI_IMPL_API void     ImGui_ImplX11_Shutdown();
 IMGUI_IMPL_API void     ImGui_ImplX11_NewFrame();
 
