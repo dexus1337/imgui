@@ -11,6 +11,7 @@
 #ifndef IMGUI_DISABLE
 
 IMGUI_IMPL_API bool     ImGui_ImplX11_Init(void* display, int window);
+IMGUI_IMPL_API bool     ImGui_ImplX11_OnEvent(void* event);
 IMGUI_IMPL_API void     ImGui_ImplX11_Shutdown();
 IMGUI_IMPL_API void     ImGui_ImplX11_NewFrame();
 
