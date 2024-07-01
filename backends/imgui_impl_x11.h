@@ -6,6 +6,8 @@
 // If you are new to Dear ImGui, read documentation from the docs/ folder + read the top of imgui.cpp.
 // Read online: https://github.com/ocornut/imgui/tree/master/docs
 
+// If you dont want to use the Xfixes lib, define IMGUI_IMPL_X11_NO_XFIXES
+
 #pragma once
 #include "imgui.h"      // IMGUI_IMPL_API
 #ifndef IMGUI_DISABLE

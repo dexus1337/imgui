@@ -4,6 +4,9 @@
 #include <X11/Xlib.h>
 #include <X11/keysym.h>
 #include <X11/cursorfont.h>
+#if not defined IMGUI_IMPL_X11_NO_XFIXES
+#include <X11/extensions/Xfixes.h>
+#endif
 #include <stdio.h>
 
 
@@ -200,7 +203,10 @@ IMGUI_IMPL_API bool ImGui_ImplX11_UpdateMouseCursor(ImGui_ImplX11_Data* bd)
     ImGuiMouseCursor imgui_cursor = ImGui::GetMouseCursor();
     if (imgui_cursor == ImGuiMouseCursor_None || io.MouseDrawCursor)
     {
-        XDefineCursor(bd->display, bd->window, XCreateFontCursor(bd->display, -1));
+        #if not defined IMGUI_IMPL_X11_NO_XFIXES
+        XFixesHideCursor(bd->display, bd->window);
+        #endif
+        //XDefineCursor(bd->display, bd->window, XCreateFontCursor(bd->display, -1)); /* Not working unfortunately */
     }
     else
     {
@@ -219,6 +225,9 @@ IMGUI_IMPL_API bool ImGui_ImplX11_UpdateMouseCursor(ImGui_ImplX11_Data* bd)
         case ImGuiMouseCursor_NotAllowed:   shape = XC_X_cursor;            break;
         }
 
+        #if not defined IMGUI_IMPL_X11_NO_XFIXES
+        XFixesShowCursor(bd->display, bd->window);
+        #endif
         XDefineCursor(bd->display, bd->window, XCreateFontCursor(bd->display, shape));
     }
     return true;
