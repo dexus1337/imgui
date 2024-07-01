@@ -258,7 +258,7 @@ IMGUI_IMPL_API void ImGui_ImplX11_Shutdown()
 
     io.BackendPlatformName = nullptr;
     io.BackendPlatformUserData = nullptr;
-    io.BackendFlags &= ~(ImGuiBackendFlags_HasMouseCursors | ImGuiBackendFlags_HasSetMousePos | ImGuiBackendFlags_HasGamepad);
+    io.BackendFlags &= ~(ImGuiBackendFlags_HasMouseCursors);
     IM_DELETE(bd);
 }
 
