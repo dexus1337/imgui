@@ -3,6 +3,7 @@
 #include "imgui_impl_x11.h"
 #include <X11/Xlib.h>
 #include <X11/keysym.h>
+#include <X11/cursorfont.h>
 #include <stdio.h>
 
 
@@ -10,33 +11,14 @@ struct ImGui_ImplX11_Data
 {
     Display*                    display;
 	Window                      window;
+    ImGuiMouseCursor            last_cursor;
 	
     ImGui_ImplX11_Data()		{ ::memset((void*)this, 0, sizeof(*this)); }
 };
 
-// Backend data stored in io.BackendPlatformUserData to allow support for multiple Dear ImGui contexts
-// It is STRONGLY preferred that you use docking branch with multi-viewports (== single Dear ImGui context + multiple windows) instead of multiple Dear ImGui contexts.
-// FIXME: multi-context support is not well tested and probably dysfunctional in this backend.
-// FIXME: some shared resources (mouse cursor shape, gamepad) are mishandled when using multi-context.
 static ImGui_ImplX11_Data* ImGui_ImplX11_GetBackendData()
 {
     return ImGui::GetCurrentContext() ? (ImGui_ImplX11_Data*)ImGui::GetIO().BackendPlatformUserData : nullptr;
-}
-
-IMGUI_IMPL_API bool ImGui_ImplX11_Init(void* display, int window)
-{
-	ImGuiIO& io = ImGui::GetIO();
-    IM_ASSERT(io.BackendPlatformUserData == nullptr && "Already initialized a platform backend!");
-
-	ImGui_ImplX11_Data* bd = IM_NEW(ImGui_ImplX11_Data)();
-
-    bd->display = reinterpret_cast< Display* >(display);
-    bd->window  = static_cast< Window >(window);
-
-    io.BackendPlatformUserData = (void*)bd;
-    io.BackendPlatformName = "imgui_impl_x11";
-	
-	return true;
 }
 
 static ImGuiKey ImGui_ImplX11_KeyCode_to_ImKey(int key)
@@ -132,7 +114,6 @@ static ImGuiKey ImGui_ImplX11_KeyCode_to_ImKey(int key)
     }
 }
 
-
 IMGUI_IMPL_API void ImGui_ImplX11_KeyEvent( int native_keycode, bool down )
 {
     ImGuiIO& io     = ImGui::GetIO( );
@@ -200,15 +181,64 @@ IMGUI_IMPL_API bool ImGui_ImplX11_OnEvent(void* event)
         case ButtonRelease:
             ImGui_ImplX11_MouseEvent( evt->xbutton.button, false );
             break;
-        case MotionNotify:
-            /* TODO: check when to use _root variables */
+        /*case MotionNotify:
             io.AddMousePosEvent( static_cast< float >( evt->xmotion.x ), static_cast< float >( evt->xmotion.y ) );
-            break;
+            break; <- for some reason, this is lagging behind A LOT, dont use it*/
         default:
             break;
     }
 
     return true;
+}
+
+IMGUI_IMPL_API bool ImGui_ImplX11_UpdateMouseCursor(ImGui_ImplX11_Data* bd)
+{
+    ImGuiIO& io = ImGui::GetIO();
+    if (io.ConfigFlags & ImGuiConfigFlags_NoMouseCursorChange)
+        return false;
+
+    ImGuiMouseCursor imgui_cursor = ImGui::GetMouseCursor();
+    if (imgui_cursor == ImGuiMouseCursor_None || io.MouseDrawCursor)
+    {
+        XDefineCursor(bd->display, bd->window, XCreateFontCursor(bd->display, -1));
+    }
+    else
+    {
+        // Show OS mouse cursor
+        unsigned int shape;
+        switch (imgui_cursor)
+        {
+        case ImGuiMouseCursor_Arrow:        shape = XC_arrow;               break;
+        case ImGuiMouseCursor_TextInput:    shape = XC_xterm;               break;
+        case ImGuiMouseCursor_ResizeAll:    shape = XC_fleur;               break;
+        case ImGuiMouseCursor_ResizeEW:     shape = XC_sb_h_double_arrow;   break;
+        case ImGuiMouseCursor_ResizeNS:     shape = XC_sb_v_double_arrow;   break;
+        case ImGuiMouseCursor_ResizeNESW:   shape = XC_bottom_right_corner; break;
+        case ImGuiMouseCursor_ResizeNWSE:   shape = XC_bottom_left_corner;  break;
+        case ImGuiMouseCursor_Hand:         shape = XC_hand1;               break;
+        case ImGuiMouseCursor_NotAllowed:   shape = XC_X_cursor;            break;
+        }
+
+        XDefineCursor(bd->display, bd->window, XCreateFontCursor(bd->display, shape));
+    }
+    return true;
+}
+
+IMGUI_IMPL_API bool ImGui_ImplX11_Init(void* display, int window)
+{
+	ImGuiIO& io = ImGui::GetIO();
+    IM_ASSERT(io.BackendPlatformUserData == nullptr && "Already initialized a platform backend!");
+
+	ImGui_ImplX11_Data* bd = IM_NEW(ImGui_ImplX11_Data)();
+
+    bd->display = reinterpret_cast< Display* >(display);
+    bd->window  = static_cast< Window >(window);
+
+    io.BackendPlatformUserData = (void*)bd;
+    io.BackendPlatformName = "imgui_impl_x11";
+    io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors; 
+
+	return true;
 }
 
 IMGUI_IMPL_API void ImGui_ImplX11_Shutdown()
@@ -230,10 +260,25 @@ IMGUI_IMPL_API void ImGui_ImplX11_NewFrame()
     IM_ASSERT(bd != nullptr && "Did you call ImGui_ImplWin32_Init()?");
 
     XWindowAttributes attr ={};
-    XGetWindowAttributes( bd->display, bd->window, &attr);
+    XGetWindowAttributes(bd->display, bd->window, &attr);
 
     io.DisplaySize.x = static_cast<float>(attr.width);
     io.DisplaySize.y = static_cast<float>(attr.height);
+
+    Window ptrWndR, ptrWndC     = 0;
+    int x_root, y_root, x, y    = 0;
+    unsigned int mask           = 0;
+    XQueryPointer(bd->display, bd->window, &ptrWndR, &ptrWndC, &x_root, &y_root, &x, &y, &mask);
+
+    if ( io.MousePos.x != x || io.MousePos.y != y )
+        io.AddMousePosEvent( static_cast< float >( x ), static_cast< float >( y ) );
+    
+    ImGuiMouseCursor mouse_cursor = io.MouseDrawCursor ? ImGuiMouseCursor_None : ImGui::GetMouseCursor();
+    if (bd->last_cursor != mouse_cursor)
+    {
+        bd->last_cursor = mouse_cursor;
+        ImGui_ImplX11_UpdateMouseCursor(bd);
+    }
 }
 
 
