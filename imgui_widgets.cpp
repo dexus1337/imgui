@@ -7184,7 +7184,7 @@ bool ImGui::SelectKey(const char* label, ImGuiKey* p_key, const ImVec2& size)
 		
 		for ( int i = ImGuiKey_NamedKey_END - 1; i >= ImGuiKey_NamedKey_BEGIN; i-- )
 		{
-			if( ImGui::GetIO( ).KeysDown[ i ] )
+			if( ImGui::IsKeyDown( static_cast< ImGuiKey >( i ) ) )
 			{
 				*p_key	= static_cast< ImGuiKey >( i );
 				
