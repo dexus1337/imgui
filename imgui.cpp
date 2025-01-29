@@ -1181,7 +1181,7 @@ static const ImVec2 TOOLTIP_DEFAULT_PIVOT_TOUCH = ImVec2(0.5f, 1.0f);   // Multi
 //-------------------------------------------------------------------------
 
 static void             SetCurrentWindow(ImGuiWindow* window);
-static ImGuiWindow*     CreateNewWindow(const char* name, ImGuiWindowFlags flags);
+static ImGuiWindow*     CreateNewWindow(const char* name, ImGuiWindowFlags flags, ImTextureID icon = 0);
 static ImVec2           CalcNextScrollFromScrollTargetAndClamp(ImGuiWindow* window);
 
 static void             AddWindowToSortBuffer(ImVector<ImGuiWindow*>* out_sorted_windows, ImGuiWindow* window);
@@ -6549,13 +6549,14 @@ static void InitOrLoadWindowSettings(ImGuiWindow* window, ImGuiWindowSettings* s
     }
 }
 
-static ImGuiWindow* CreateNewWindow(const char* name, ImGuiWindowFlags flags)
+static ImGuiWindow* CreateNewWindow(const char* name, ImGuiWindowFlags flags, ImTextureID icon)
 {
     // Create window the first time
     //IMGUI_DEBUG_LOG("CreateNewWindow '%s', flags = 0x%08X\n", name, flags);
     ImGuiContext& g = *GImGui;
     ImGuiWindow* window = IM_NEW(ImGuiWindow)(&g, name);
     window->Flags = flags;
+    window->Icon = icon;
     g.WindowsById.SetVoidPtr(window->ID, window);
 
     ImGuiWindowSettings* settings = NULL;
@@ -7220,9 +7221,37 @@ void ImGui::RenderWindowTitleBarContents(ImGuiWindow* window, const ImRect& titl
             clip_r.Max.x = ImMin(clip_r.Max.x, marker_pos.x - (int)(marker_size_x * 0.5f));
         }
     }
+    ImVec2 adjustedforpic;
     //if (g.IO.KeyShift) window->DrawList->AddRect(layout_r.Min, layout_r.Max, IM_COL32(255, 128, 0, 255)); // [DEBUG]
     //if (g.IO.KeyCtrl) window->DrawList->AddRect(clip_r.Min, clip_r.Max, IM_COL32(255, 128, 0, 255)); // [DEBUG]
-    RenderTextClipped(layout_r.Min, layout_r.Max, name, NULL, &text_size, style.WindowTitleAlign, &clip_r);
+    if (window->Icon)
+    {
+        int iconsize = window->TitleBarHeight - ( g.Style.FramePadding.y * 2.f );
+
+        layout_r.Min.x += ( window->TitleBarHeight + g.Style.FramePadding.x );
+        RenderTextClipped(layout_r.Min, layout_r.Max, name, NULL, &text_size, style.WindowTitleAlign, &clip_r);
+
+        ImVec2 pos      = layout_r.Min;
+        ImVec2 pos_max  = layout_r.Max;
+        ImVec2 align    = style.WindowTitleAlign;
+
+        // Align whole block. We should defer that to the better rendering function when we'll have support for individual line alignment.
+        if (align.x > 0.0f) pos.x = ImMax(pos.x, pos.x + (pos_max.x - pos.x - text_size.x) * align.x);
+
+        
+        pos.x -= ( iconsize + g.Style.FramePadding.x );
+        pos.y = layout_r.Min.y + g.Style.FramePadding.y;
+
+        pos_max = pos;
+        pos_max.x += iconsize;
+        pos_max.y += iconsize;
+
+        window->DrawList->AddImageRounded(window->Icon, pos, pos_max, ImVec2(0.f, 0.f), ImVec2(1.f, 1.f), 0xffffffff, g.Style.FrameRounding);
+    }
+    else
+    {
+        RenderTextClipped(layout_r.Min, layout_r.Max, name, NULL, &text_size, style.WindowTitleAlign, &clip_r);
+    }
 }
 
 void ImGui::UpdateWindowParentAndRootLinks(ImGuiWindow* window, ImGuiWindowFlags flags, ImGuiWindow* parent_window)
@@ -7286,7 +7315,7 @@ static void SetWindowActiveForSkipRefresh(ImGuiWindow* window)
 //   You can use the "##" or "###" markers to use the same label with different id, or same id with different label. See documentation at the top of this file.
 // - Return false when window is collapsed, so you can early out in your code. You always need to call ImGui::End() even if false is returned.
 // - Passing 'bool* p_open' displays a Close button on the upper-right corner of the window, the pointed value will be set to false when the button is pressed.
-bool ImGui::Begin(const char* name, bool* p_open, ImGuiWindowFlags flags)
+bool ImGui::Begin(const char* name, bool* p_open, ImGuiWindowFlags flags, ImTextureID icon_texture, int titleheight)
 {
     ImGuiContext& g = *GImGui;
     const ImGuiStyle& style = g.Style;
@@ -7298,7 +7327,7 @@ bool ImGui::Begin(const char* name, bool* p_open, ImGuiWindowFlags flags)
     ImGuiWindow* window = FindWindowByName(name);
     const bool window_just_created = (window == NULL);
     if (window_just_created)
-        window = CreateNewWindow(name, flags);
+        window = CreateNewWindow(name, flags, icon_texture);
 
     // [DEBUG] Debug break requested by user
     if (g.DebugBreakInWindow == window->ID)
@@ -7533,6 +7562,8 @@ bool ImGui::Begin(const char* name, bool* p_open, ImGuiWindowFlags flags)
         window->DC.MenuBarOffset.x = ImMax(ImMax(window->WindowPadding.x, style.ItemSpacing.x), g.NextWindowData.MenuBarOffsetMinVal.x);
         window->DC.MenuBarOffset.y = g.NextWindowData.MenuBarOffsetMinVal.y;
         window->TitleBarHeight = (flags & ImGuiWindowFlags_NoTitleBar) ? 0.0f : g.FontSize + g.Style.FramePadding.y * 2.0f;
+        if (titleheight)
+            window->TitleBarHeight = titleheight + g.Style.FramePadding.y * 2.0f;
         window->MenuBarHeight = (flags & ImGuiWindowFlags_MenuBar) ? window->DC.MenuBarOffset.y + g.FontSize + g.Style.FramePadding.y * 2.0f : 0.0f;
         window->FontRefSize = g.FontSize; // Lock this to discourage calling window->CalcFontSize() outside of current window.
 
