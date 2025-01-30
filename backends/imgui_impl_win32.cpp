@@ -888,7 +888,7 @@ float ImGui_ImplWin32_GetDpiScaleForHwnd(void* hwnd)
     return ImGui_ImplWin32_GetDpiScaleForMonitor(monitor);
 }
 
-ImGuiKey ImGui_ImplWin32_VirtualKeyToImGuiKey(void* wParam) 
+ImGuiKey ImGui_ImplWin32_VirtualKeyToImGuiKey(uintptr_t wParam) 
 {
     // There is no distinct VK_xxx for keypad enter, instead it is VK_RETURN + KF_EXTENDED, we assign it an arbitrary value to make code more readable (VK_ codes go up to 255)
     #define IM_VK_KEYPAD_ENTER (VK_RETURN + 256)
