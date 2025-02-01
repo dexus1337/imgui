@@ -1115,11 +1115,17 @@ void ImGui::Image(ImTextureID user_texture_id, const ImVec2& image_size, const I
 
 // - Read about ImTextureID here: https://github.com/ocornut/imgui/wiki/Image-Loading-and-Displaying-Examples
 // - 'uv0' and 'uv1' are texture coordinates. Read about them from the same link above.
-void ImGui::ImageCentered(ImTextureID user_texture_id, const ImVec2& image_size, const ImVec2& uv0, const ImVec2& uv1, const ImVec4& tint_col, const ImVec4& border_col)
+void ImGui::ImageCentered(ImTextureID user_texture_id, const ImVec2& image_size, ImGuiCenteredFlags flags, const ImVec2& uv0, const ImVec2& uv1, const ImVec4& tint_col, const ImVec4& border_col)
 {
     auto windowWidth = ImGui::GetWindowSize().x;
+    auto windowHeight = ImGui::GetWindowSize().y;
 
-    ImGui::SetCursorPosX((windowWidth - image_size.x) * 0.5f);
+    if ( flags & ImGuiCenteredFlags_Horizontal )
+        ImGui::SetCursorPosX((windowWidth - image_size.x) * 0.5f);
+
+    if (flags & ImGuiCenteredFlags_Vertical)
+        ImGui::SetCursorPosY((windowHeight - image_size.y) * 0.5f);
+
     ImGuiWindow* window = GetCurrentWindow();
     if (window->SkipItems)
         return;
