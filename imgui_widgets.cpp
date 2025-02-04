@@ -372,6 +372,28 @@ void ImGui::TextWrappedV(const char* fmt, va_list args)
         PopTextWrapPos();
 }
 
+// Add a label+text combo aligned to other label+value widgets
+void ImGui::LabelAligned(const char* label, ImGuiCenteredFlags flags, const ImVec2& align)
+{
+    ImGuiWindow* window = GetCurrentWindow();
+    if (window->SkipItems)
+        return;
+
+    ImGuiContext& g = *GImGui;
+    const ImGuiStyle& style = g.Style;
+    const float w = CalcItemWidth();
+
+    const ImVec2 label_size = CalcTextSize(label, NULL, true);
+
+    const ImVec2 pos = window->DC.CursorPos;
+    const ImRect total_bb(pos, pos + ImVec2(w + (label_size.x > 0.0f ? style.ItemInnerSpacing.x + label_size.x : 0.0f), label_size.y + style.FramePadding.y * 2));
+    ItemSize(total_bb, style.FramePadding.y);
+    if (!ItemAdd(total_bb, 0))
+        return;
+
+    RenderText(ImVec2(total_bb.Min.x + style.ItemInnerSpacing.x, total_bb.Min.y + style.FramePadding.y), label);
+}
+
 void ImGui::LabelText(const char* label, const char* fmt, ...)
 {
     va_list args;
@@ -1115,16 +1137,16 @@ void ImGui::Image(ImTextureID user_texture_id, const ImVec2& image_size, const I
 
 // - Read about ImTextureID here: https://github.com/ocornut/imgui/wiki/Image-Loading-and-Displaying-Examples
 // - 'uv0' and 'uv1' are texture coordinates. Read about them from the same link above.
-void ImGui::ImageCentered(ImTextureID user_texture_id, const ImVec2& image_size, ImGuiCenteredFlags flags, const ImVec2& uv0, const ImVec2& uv1, const ImVec4& tint_col, const ImVec4& border_col)
+void ImGui::ImageAligned(ImTextureID user_texture_id, const ImVec2& image_size, ImGuiCenteredFlags flags, const ImVec2& align, const ImVec2& uv0, const ImVec2& uv1, const ImVec4& tint_col, const ImVec4& border_col)
 {
     auto windowWidth = ImGui::GetWindowSize().x;
     auto windowHeight = ImGui::GetWindowSize().y;
 
     if ( flags & ImGuiCenteredFlags_Horizontal )
-        ImGui::SetCursorPosX((windowWidth - image_size.x) * 0.5f);
+        ImGui::SetCursorPosX((windowWidth * align.x) - (image_size.x * align.x));
 
     if (flags & ImGuiCenteredFlags_Vertical)
-        ImGui::SetCursorPosY((windowHeight - image_size.y) * 0.5f);
+        ImGui::SetCursorPosY((windowHeight * align.y) - (image_size.y * align.y));
 
     ImGuiWindow* window = GetCurrentWindow();
     if (window->SkipItems)
