@@ -373,17 +373,26 @@ void ImGui::TextWrappedV(const char* fmt, va_list args)
 }
 
 // Add a label+text combo aligned to other label+value widgets
-void ImGui::LabelAligned(const char* label, ImGuiCenteredFlags flags, const ImVec2& align)
+void ImGui::LabelAligned(const char* label, const ImVec2& align)
 {
     ImGuiWindow* window = GetCurrentWindow();
     if (window->SkipItems)
         return;
+
+    auto windowWidth = ImGui::GetWindowSize().x;
+    auto windowHeight = ImGui::GetWindowSize().y;
 
     ImGuiContext& g = *GImGui;
     const ImGuiStyle& style = g.Style;
     const float w = CalcItemWidth();
 
     const ImVec2 label_size = CalcTextSize(label, NULL, true);
+
+    if (align.x)
+        ImGui::SetCursorPosX((windowWidth * align.x) - (label_size.x * align.x));
+
+    if (align.y)
+        ImGui::SetCursorPosY((windowHeight * align.y) - (label_size.y * align.y));
 
     const ImVec2 pos = window->DC.CursorPos;
     const ImRect total_bb(pos, pos + ImVec2(w + (label_size.x > 0.0f ? style.ItemInnerSpacing.x + label_size.x : 0.0f), label_size.y + style.FramePadding.y * 2));
@@ -1142,15 +1151,15 @@ void ImGui::ImageWithBg(ImTextureID user_texture_id, const ImVec2& image_size, c
 
 // - Read about ImTextureID here: https://github.com/ocornut/imgui/wiki/Image-Loading-and-Displaying-Examples
 // - 'uv0' and 'uv1' are texture coordinates. Read about them from the same link above.
-void ImGui::ImageAligned(ImTextureID user_texture_id, const ImVec2& image_size, ImGuiCenteredFlags flags, const ImVec2& align, const ImVec2& uv0, const ImVec2& uv1, const ImVec4& tint_col, const ImVec4& border_col)
+void ImGui::ImageAligned(ImTextureID user_texture_id, const ImVec2& image_size, const ImVec2& align, const ImVec2& uv0, const ImVec2& uv1, const ImVec4& tint_col, const ImVec4& border_col)
 {
     auto windowWidth = ImGui::GetWindowSize().x;
     auto windowHeight = ImGui::GetWindowSize().y;
 
-    if ( flags & ImGuiCenteredFlags_Horizontal )
+    if (align.x)
         ImGui::SetCursorPosX((windowWidth * align.x) - (image_size.x * align.x));
 
-    if (flags & ImGuiCenteredFlags_Vertical)
+    if (align.y)
         ImGui::SetCursorPosY((windowHeight * align.y) - (image_size.y * align.y));
 
     ImGuiWindow* window = GetCurrentWindow();
