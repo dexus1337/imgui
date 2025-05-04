@@ -36,8 +36,107 @@ HOW TO UPDATE?
 - Please report any issue!
 
 -----------------------------------------------------------------------
- VERSION 1.91.9 WIP (In Progress)
+ VERSION 1.92.0 WIP (In Progress)
 -----------------------------------------------------------------------
+
+Breaking changes:
+
+- Backends: SDL3: Fixed casing typo in function name: (#8509, #8163, #7998, #7988) [@puugz]
+  - Imgui_ImplSDLGPU3_PrepareDrawData() -> ImGui_ImplSDLGPU3_PrepareDrawData()
+
+Other changes:
+
+- IO: variations in analog-only components of gamepad events do not interfere
+  with trickling of mouse position events (#4921, #8508)
+- Windows: fixed SetNextWindowCollapsed()/SetWindowCollapsed() breaking
+  codepath that preserve last contents size when collapsed, resulting in
+  programmatically uncollapsing auto-sizing windows having them flicker size
+  for a frame. (#7691) [@achabense]
+- Windows: loosened code to allow hovering of resize grips, borders, and table
+  borders while hovering a sibling child window, so that the code in master matches
+  one in docking (they accidentally diverged). (#8554)
+- TreeNode: added experimental flags to draw tree hierarchy outlines linking
+  parent and tree nodes: (#2920)
+  - ImGuiTreeNodeFlags_DrawLinesNone: No lines drawn (default value in style.TreeLinesFlags).
+  - ImGuiTreeNodeFlags_DrawLinesFull: Horizontal lines to child nodes. Vertical line drawn down to TreePop() position: cover full contents.
+  - ImGuiTreeNodeFlags_DrawLinesToNodes: Horizontal lines to child nodes. Vertical line drawn down to bottom-most child node.
+  - Added style.TreeLinesFlags which stores the default setting,
+    which may be overriden in individual TreeNode() calls.
+  - Added style.TreeLinesSize (default to 1.0f).
+  - Added style.TreeLinesRadius (default to 0.0f).
+  - Added ImGuiCol_TreeLines (in default style this is the same as ImGuiCol_Border).
+  - Caveats:
+    - Tree nodes may be used in many creative ways (manually positioning openable
+      nodes in unusual ways, using indent to create tree-looking structures, etc.)
+      and the feature may not accurately represent them in every cases.
+    - The feature adds a little cost as extra data needs to be stored.
+      (ImGuiTreeNodeFlags_DrawLinesToNodes is slower than ImGuiTreeNodeFlags_DrawLinesFull
+      which may be meaningful on very large trees, as it needs to record bottom-most
+      Y position even for clipped nodes).
+    - The feature is unlikely to ever work properly when using a coarse clipper
+      such as ImGuiListClipper.
+- TreeNode: fixed incorrect clipping of arrow/bullet when using ImGuiTreeNodeFlags_SpanAllColumns.
+- Tables: fixed TableHeader() eager vertical clipping of text which may be noticeable
+  with FramePadding.y was too small. (#6236)
+- Tables: fixed an assert when combining Tables, Frozen Rows, Clipper and BeginMultiSelect()
+  in a certain order. (#8595, #8250)
+- Tabs: fixes small issues with how "..." ellipsis moved depending on visibility
+  of Close Button or Unsaved Document marker. (#8387)
+- Nav: fixed assertion when holding gamepad FaceLeft/West button to open
+  CTRL+Tab windowing + pressing a keyboard key. (#8525)
+- Error Handling: added better error report and recovery for extraneous
+  EndPopup() call. (#1651, #8499)
+- Error Handling: added better error report and recovery when calling EndFrame()
+  or Render() without NewFrame(). Was previously only an assert.
+- Fonts: reworked text ellipsis logic to ensure a "..." is always displayed instead
+  of a single character. (#7024)
+- Fonts: word-wrapping code handle ideographic comma & full stop (U+3001, U+3002). (#8540)
+- Fonts: fixed CalcWordWrapPositionA() fallback when width is too small to wrap:
+  would use a +1 offset instead of advancing to the next UTF-8 codepoint. (#8540)
+- Style, InputText: added ImGuiCol_InputTextCursor to configure color of
+  the InputText cursor/caret. (#7031)
+- Platform IME: added ImGuiPlatformImeData::ViewportId info (backported from Docking branch).
+- Platform IME: added ImGuiPlatformImeData::WantTextInput which might set independently
+  of WantVisible. This is set in the same structure because activating text input generally
+  requires providing a window to the backend. (#8584, #6341)
+- Misc: added extra operators to ImVec4 in IMGUI_DEFINE_MATH_OPERATORS block. (#8510) [@gan74]
+- Backends: Win32: Fixed an issue where externally losing mouse capture (due to e.g. focus loss)
+  would fail to claim it again the next subsequent click. (#8594)
+- Backends: SDL2, SDL3, OSX: Fill gamepad inputs and set ImGuiBackendFlags_HasGamepad
+  regardless of ImGuiConfigFlags_NavEnableGamepad being set. (#8508)
+- Backends: SDL2, SDL3: don't attempt to call SDL_CaptureMouse() on drivers where we don't
+  call SDL_GetGlobalMouseState(). This is specifically for Wayland but we currently use
+  the same white-list as SDL_GetGlobalMouseState(). (#8561) [@vs49688]
+- Backends: SDL3: Update for SDL3 api changes: revert SDL_GetClipboardText()
+  memory ownership change. (#8530, #7801) [@Green-Sky]
+- Backends: SDL3: honor ImGuiPlatformImeData->WantTextInput as an alternative
+  way to call SDL_StartTextInput(), without IME being necessarily visible. (#8584)
+- Backends: SDLGPU3: Made ImGui_ImplSDLGPU3_PrepareDrawData() reuse GPU Transfer Buffers which
+  were unusually slow to recreate every frame. Much faster now. (#8534) [@ocornut, @TheMode]
+- Backends: SDLGPU3: added support for ImDrawCallback_ResetRenderState. (#8599)
+- Backends: Vulkan: Deep-copy ImGui_ImplVulkan_InitInfo::PipelineRenderingCreateInfo's
+  pColorAttachmentFormats buffer when set, in order to reduce common user-error of
+  specifying a pointer to data that gets out of scope. (#8282)
+- Examples: DirectX12+Win32: also test for IsIconic() for sleeping since we don't seem to
+  get a DXGI_STATUS_OCCLUDED signal when minimized. (#8603) [@dooann]
+
+
+-----------------------------------------------------------------------
+ VERSION 1.91.9b (Released 2025-03-17)
+-----------------------------------------------------------------------
+
+Decorated log and release notes: https://github.com/ocornut/imgui/releases/tag/v1.91.9b
+
+- Tables: Fixed assert when loading .ini settings with reordered columns. (#8496, #7934)
+- Tables: Fixed issues when loading .ini settings for a table with columns using
+  ImGuiTableColumnFlags_DefaultHide or ImGuiTableColumnFlags_DefaultSort. (#8496, #7934)
+
+
+-----------------------------------------------------------------------
+ VERSION 1.91.9 (Released 2025-03-14)
+-----------------------------------------------------------------------
+
+Decorated log and release notes: https://github.com/ocornut/imgui/releases/tag/v1.91.9
 
 Breaking changes:
 
@@ -62,6 +161,8 @@ Breaking changes:
 - Backends: Vulkan: Added 'uint32_t api_version' argument to ImGui_ImplVulkan_LoadFunctions().
   Note that it was also added to ImGui_ImplVulkan_InitInfo but for the later it is optional.
   (#8326, #8365, #8400)
+- Internals: Fonts: ImFontAtlas::ConfigData[] has been renamed to ImFontAtlas::Sources[],
+- Internals: Fonts: ImFont::ConfigData[], ConfigDataCount has been renamed to Sources[], SourcesCount.
 - Internals: Menus: reworked mangling of menu windows to use "###Menu_00" etc. instead
   of "##Menu_00", allowing them to also store the menu name before it. This shouldn't
   affect code unless directly accessing menu window from their mangled name.
@@ -72,16 +173,26 @@ Other changes:
   RadioButton(), Selectable(). Regression from 2025/01/13. (#8370)
 - Windows: Fixed an issue where BeginChild() inside a collapsed Begin()
   wouldn't inherit the SkipItems flag, resulting in missing coarse clipping
-  opportunity for code not checking the BeginChild() return value.
+  opportunities for code not checking the BeginChild() return value.
 - Windows, Style: Added style.WindowBorderHoverPadding setting to configure
   inner/outer padding applied to hit-testing of windows borders and detection
   of hovered window.
 - InputText: Allow CTRL+Shift+Z to redo even outside of OSX. (#8389) [@tanksdude]
+- InputText: Pasting a multi-line buffer into a single-line edit replaces
+  carriage return by spaces. (#8459)
 - InputTextWithHint(): Fixed buffer-overflow (luckily often with no visible effect)
   when a user callback modified the buffer contents in a way that altered the
   visibility of the preview/hint buffer. (#8368) [@m9710797, @ocornut]
 - Scrollbar: Rework logic that fades-out scrollbar when it becomes too small,
   which amusingly made it disappear when using very big font/frame size.
+- Scrollbar: Automatically stabilize ScrollbarX visibility when detecting a
+  feedback loop manifesting with ScrollbarX visibility toggling on and off
+  repeatedly. (#8488, #3285, #4539)
+  (feedback loops of this sort can manifest in various situations, but combining
+  horizontal + vertical scrollbar + using a clipper with varying width items is
+  one frequent cause. The better solution is to, either: (1) enforce visibility
+  by using ImGuiWindowFlags_AlwaysHorizontalScrollbar or (2) declare stable
+  contents width with SetNextWindowContentSize(), if you can compute it.)
 - Tables: fixed calling SetNextWindowScroll() on clipped scrolling table
   to not leak the value into a subsequent window. (#8196)
 - Tables: fixed an issue where Columns Visible/Width state wouldn't be correctly
@@ -114,6 +225,7 @@ Other changes:
 - Debug Tools: Added io.ConfigDebugHighlightIdConflictsShowItemPicker (defaults to true)
   to allow disabled Item Picker suggestion in user facing builds. (#7961, #7669)
 - Debug Tools: Tweaked layout of ID Stack Tool and always display full path. (#4631)
+- Misc: Various zealous warning fixes for newer version of Clang.
 - Misc: Added ImGuiMouseCursor_Wait and ImGuiMouseCursor_Progress mouse cursors
   (busy/wait/hourglass shape, with or without an arrow cursor).
 - Demo: Reorganized "Widgets" section to be alphabetically ordered and split in more functions.
@@ -121,6 +233,20 @@ Other changes:
   by showing the filter inside the combo contents. (#718)
 - Examples: SDL3: Added comments to clarify setup for users of the unfortunate
   SDL_MAIN_USE_CALLBACKS feature. (#8455)
+- IO: Added ImGuiKey_Oem102 to ImGuiKey enum. (#7136, #7201, #7206, #7306, #8468)
+- Backends: reworked key handlers to use/prioritize untranslated scancodes instead of
+  translated keycodes when dealing with OEM keys which are too difficult to find a reliable
+  translated mapping on all systems, backends and keyboard layout.
+  (#7136, #7201, #7206, #7306, #7670, #7672, #8468)
+  - The affected keys are: ImGuiKey_Apostrophe, ImGuiKey_Comma, ImGuiKey_Minus, ImGuiKey_Period,
+    ImGuiKey_Slash, ImGuiKey_Semicolon, ImGuiKey_Equal, ImGuiKey_LeftBracket, ImGuiKey_RightBracket,
+    ImGuiKey_Backslash, ImGuiKey_GraveAccent, and newly introduced ImGuiKey_Oem102.
+  - This is NOT affecting characters used the text inputs.
+  - Fixes many cases of keys not emitting a ImGuiKey value with certain keyboard layouts.
+  - Makes emitted ImGuiKey values more consistent regardless of keyboard mapping,
+    but you may be getting different values as before.
+  - Win32, SDL2, SDL3: Use scancodes for OEM keys.
+  - GLFW: GLFW_KEY_WORLD_1 and GLFW_KEY_WORLD_2 are emitting ImGuiKey_Oem102.
 - Backends: GLFW: Fixed clipboard handler assertion when using GLFW <= 3.2.1 compiled
   with asserts enabled. (#8452)
 - Backends: SDL2, SDL3: Using SDL_OpenURL() in platform_io.Platform_OpenInShellFn
@@ -130,7 +256,8 @@ Other changes:
 - Backends: SDL2, SDL3: Avoid calling SDL_GetGlobalMouseState() when mouse is in
   relative mode. (#8425, #8407) [@TheMode]
 - Backends: SDL2, SDL3: Only start SDL_CaptureMouse() when mouse is being dragged,
-  to mitigate issues with e.g. Linux debuggers not claiming capture back. (#6410, #3650)
+  to mitigate issues with e.g. Linux debuggers not claiming capture back on debug
+  break. (#6410, #3650)
 - Backends: OpenGL3: Lazily reinitialize embedded GL loader for when calling backend
   from e.g. other DLL boundaries. (#8406)
 - Backends: DirectX12: Fixed an issue where pre-1.91.5 legacy ImGui_ImplDX12_Init()
@@ -457,7 +584,7 @@ Other changes:
      - Set io.ConfigNavCursorVisibleAuto = true (default) to enable automatic toggling
        of cursor visibility (mouse click hide the cursor, arrow keys makes it visible).
      - Set io.ConfigNavCursorVisibleAlways to keep cursor always visible.
-  - Nav: added NavSetCursorVisible(bool visible) function to manipulate visibility of
+  - Nav: added SetNavCursorVisible(bool visible) function to manipulate visibility of
     navigation cursor (e.g. set default state, or after some actions). (#1074, #2048, #7237, #8059)
   - Nav: added io.ConfigNavEscapeClearFocusItem and io.ConfigNavEscapeClearFocusWindow to change
     how pressing Escape affects navigation. (#8059, #2048, #1074, #3200)
@@ -574,7 +701,7 @@ Decorated log and release notes: https://github.com/ocornut/imgui/releases/tag/v
 
 Breaking changes:
 
- - Internals: using multiple overlayed ButtonBehavior() with same ID will now have the
+ - Internals: using multiple overlaid ButtonBehavior() with same ID will now have the
    io.ConfigDebugHighlightIdConflicts=true feature emit a warning. (#8030)
    It was one of the rare case where using same ID is legal. Workarounds:
    - use single ButtonBehavior() call with multiple _MouseButton flags
@@ -2049,7 +2176,7 @@ Other changes:
    - Public API: PushTabStop(false) / PopTabStop()
    - Internal: PushItemFlag(ImGuiItemFlags_NoTabStop, true);
    - Internal: Directly pass ImGuiItemFlags_NoTabStop to ItemAdd() for custom widgets.
-- Nav: Tabbing/Shift-Tabbing can more reliably be used to step out of an item that is not
+- Nav: Tabbing/Shift+Tabbing can more reliably be used to step out of an item that is not
   tab-stoppable. (#3092, #5759, #787)
 - Nav: Made Enter key submit the same type of Activation event as Space key,
   allowing to press buttons with Enter. (#5606)
