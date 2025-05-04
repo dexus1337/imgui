@@ -414,6 +414,36 @@ void ImGui::TextAlignedV(float align_x, float size_x, const char* fmt, va_list a
         SetTooltip("%.*s", (int)(text_end - text), text);
 }
 
+void ImGui::LabelAligned(const char* label, const ImVec2& align)
+{
+    ImGuiWindow* window = GetCurrentWindow();
+    if (window->SkipItems)
+        return;
+
+    auto windowWidth = ImGui::GetWindowSize().x;
+    auto windowHeight = ImGui::GetWindowSize().y;
+
+    ImGuiContext& g = *GImGui;
+    const ImGuiStyle& style = g.Style;
+    const float w = CalcItemWidth();
+
+    const ImVec2 label_size = CalcTextSize(label, NULL, true);
+
+    if (align.x)
+        ImGui::SetCursorPosX((windowWidth * align.x) - (label_size.x * align.x));
+
+    if (align.y)
+        ImGui::SetCursorPosY((windowHeight * align.y) - (label_size.y * align.y));
+
+    const ImVec2 pos = window->DC.CursorPos;
+    const ImRect total_bb(pos, pos + ImVec2(w + (label_size.x > 0.0f ? style.ItemInnerSpacing.x + label_size.x : 0.0f), label_size.y + style.FramePadding.y * 2));
+    ItemSize(total_bb, style.FramePadding.y);
+    if (!ItemAdd(total_bb, 0))
+        return;
+
+    RenderText(ImVec2(total_bb.Min.x + style.ItemInnerSpacing.x, total_bb.Min.y + style.FramePadding.y), label);
+}
+
 void ImGui::LabelText(const char* label, const char* fmt, ...)
 {
     va_list args;
