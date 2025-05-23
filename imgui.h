@@ -540,24 +540,26 @@ namespace ImGui
 
     // Widgets: Text
     IMGUI_API void          TextUnformatted(const char* text, const char* text_end = NULL); // raw text without formatting. Roughly equivalent to Text("%s", text) but: A) doesn't require null terminated string if 'text_end' is specified, B) it's faster, no memory copy is done, no buffer size limits, recommended for long chunks of text.
-    IMGUI_API void          Text(const char* fmt, ...)                                      IM_FMTARGS(1); // formatted text
-    IMGUI_API void          TextV(const char* fmt, va_list args)                            IM_FMTLIST(1);
-	IMGUI_API void          TextCentered(const char* fmt, ...)                              IM_FMTARGS(1); // formatted text
-	IMGUI_API void          TextCenteredV(const char* fmt, va_list args)                    IM_FMTLIST(1);
-    IMGUI_API void          TextColored(const ImVec4& col, const char* fmt, ...)            IM_FMTARGS(2); // shortcut for PushStyleColor(ImGuiCol_Text, col); Text(fmt, ...); PopStyleColor();
-    IMGUI_API void          TextColoredV(const ImVec4& col, const char* fmt, va_list args)  IM_FMTLIST(2);
-	IMGUI_API void          TextColored(ImU32 col, const char* fmt, ...)                    IM_FMTARGS(2); // shortcut for PushStyleColor(ImGuiCol_Text, col); Text(fmt, ...); PopStyleColor();
-    IMGUI_API void          TextColoredV(ImU32 col, const char* fmt, va_list args)          IM_FMTLIST(2);
-    IMGUI_API void          TextDisabled(const char* fmt, ...)                              IM_FMTARGS(1); // shortcut for PushStyleColor(ImGuiCol_Text, style.Colors[ImGuiCol_TextDisabled]); Text(fmt, ...); PopStyleColor();
-    IMGUI_API void          TextDisabledV(const char* fmt, va_list args)                    IM_FMTLIST(1);
-    IMGUI_API void          TextWrapped(const char* fmt, ...)                               IM_FMTARGS(1); // shortcut for PushTextWrapPos(0.0f); Text(fmt, ...); PopTextWrapPos();. Note that this won't work on an auto-resizing window if there's no other widgets to extend the window width, yoy may need to set a size using SetNextWindowSize().
-    IMGUI_API void          TextWrappedV(const char* fmt, va_list args)                     IM_FMTLIST(1);
-    IMGUI_API void          LabelAligned(const char* label, const ImVec2& align = ImVec2(0.5f, 0.5f)); // display text aligned the same way as value+label widgets
-    IMGUI_API void          LabelText(const char* label, const char* fmt, ...)              IM_FMTARGS(2); // display text+label aligned the same way as value+label widgets
-    IMGUI_API void          LabelTextV(const char* label, const char* fmt, va_list args)    IM_FMTLIST(2);
-    IMGUI_API void          BulletText(const char* fmt, ...)                                IM_FMTARGS(1); // shortcut for Bullet()+Text()
-    IMGUI_API void          BulletTextV(const char* fmt, va_list args)                      IM_FMTLIST(1);
-    IMGUI_API void          SeparatorText(const char* label);                               // currently: formatted text with a horizontal line
+    IMGUI_API void          Text(const char* fmt, ...)                                                  IM_FMTARGS(1); // formatted text
+    IMGUI_API void          TextV(const char* fmt, va_list args)                                        IM_FMTLIST(1);
+	IMGUI_API void          TextCentered(const char* fmt, ...)                                          IM_FMTARGS(1); // formatted text
+    IMGUI_API void          TextCenteredV(const char* fmt, va_list args)                                IM_FMTLIST(1);
+    IMGUI_API void          TextAligned(float align_x, float size_x, const char* fmt, ...)              IM_FMTARGS(3); // shortcut for PushStyleColor(ImGuiCol_Text, col); Text(fmt, ...); PopStyleColor();
+    IMGUI_API void          TextAlignedV(float align_x, float size_x, const char* fmt, va_list args)    IM_FMTLIST(3);
+    IMGUI_API void          TextColored(const ImVec4& col, const char* fmt, ...)                        IM_FMTARGS(2); // shortcut for PushStyleColor(ImGuiCol_Text, col); Text(fmt, ...); PopStyleColor();
+    IMGUI_API void          TextColoredV(const ImVec4& col, const char* fmt, va_list args)              IM_FMTLIST(2);
+	IMGUI_API void          TextColored(ImU32 col, const char* fmt, ...)                                IM_FMTARGS(2); // shortcut for PushStyleColor(ImGuiCol_Text, col); Text(fmt, ...); PopStyleColor();
+    IMGUI_API void          TextColoredV(ImU32 col, const char* fmt, va_list args)                      IM_FMTLIST(2);
+    IMGUI_API void          TextDisabled(const char* fmt, ...)                                          IM_FMTARGS(1); // shortcut for PushStyleColor(ImGuiCol_Text, style.Colors[ImGuiCol_TextDisabled]); Text(fmt, ...); PopStyleColor();
+    IMGUI_API void          TextDisabledV(const char* fmt, va_list args)                                IM_FMTLIST(1);
+    IMGUI_API void          TextWrapped(const char* fmt, ...)                                           IM_FMTARGS(1); // shortcut for PushTextWrapPos(0.0f); Text(fmt, ...); PopTextWrapPos();. Note that this won't work on an auto-resizing window if there's no other widgets to extend the window width, yoy may need to set a size using SetNextWindowSize().
+    IMGUI_API void          TextWrappedV(const char* fmt, va_list args)                                 IM_FMTLIST(1);
+    IMGUI_API void          LabelAligned(const char* label, const ImVec2& align = ImVec2(0.5f, 0.5f));  // display text aligned the same way as value+label widgets
+    IMGUI_API void          LabelText(const char* label, const char* fmt, ...)                          IM_FMTARGS(2); // display text+label aligned the same way as value+label widgets
+    IMGUI_API void          LabelTextV(const char* label, const char* fmt, va_list args)                IM_FMTLIST(2);
+    IMGUI_API void          BulletText(const char* fmt, ...)                                            IM_FMTARGS(1); // shortcut for Bullet()+Text()
+    IMGUI_API void          BulletTextV(const char* fmt, va_list args)                                  IM_FMTLIST(1);
+    IMGUI_API void          SeparatorText(const char* label);                                           // currently: formatted text with a horizontal line
 
     // Widgets: Main
     // - Most widgets return true when the value has been changed or when pressed/selected
@@ -582,9 +584,9 @@ namespace ImGui
     // - Image() pads adds style.ImageBorderSize on each side, ImageButton() adds style.FramePadding on each side.
     // - ImageButton() draws a background based on regular Button() color + optionally an inner background if specified.
     // - An obsolete version of Image(), before 1.91.9 (March 2025), had a 'tint_col' parameter which is now supported by the ImageWithBg() function.
-    IMGUI_API void          ImageAligned(ImTextureID user_texture_id, const ImVec2& image_size, const ImVec2& align = ImVec2(0.5f, 0.5f), const ImVec2& uv0 = ImVec2(0, 0), const ImVec2& uv1 = ImVec2(1, 1));
     IMGUI_API void          Image(ImTextureID user_texture_id, const ImVec2& image_size, const ImVec2& uv0 = ImVec2(0, 0), const ImVec2& uv1 = ImVec2(1, 1));
     IMGUI_API void          ImageWithBg(ImTextureID user_texture_id, const ImVec2& image_size, const ImVec2& uv0 = ImVec2(0, 0), const ImVec2& uv1 = ImVec2(1, 1), const ImVec4& bg_col = ImVec4(0, 0, 0, 0), const ImVec4& tint_col = ImVec4(1, 1, 1, 1));
+    IMGUI_API void          ImageAlignedWithBg(ImTextureID user_texture_id, const ImVec2& image_size, const ImVec2& align = ImVec2(0.5f, 0.5f), const ImVec2& uv0 = ImVec2(0, 0), const ImVec2& uv1 = ImVec2(1, 1), const ImVec4& tint_col = ImVec4(1, 1, 1, 1), const ImVec4& border_col = ImVec4(0, 0, 0, 0));
     IMGUI_API bool          ImageButton(const char* str_id, ImTextureID user_texture_id, const ImVec2& image_size, const ImVec2& uv0 = ImVec2(0, 0), const ImVec2& uv1 = ImVec2(1, 1), const ImVec4& bg_col = ImVec4(0, 0, 0, 0), const ImVec4& tint_col = ImVec4(1, 1, 1, 1));
 
     // Widgets: Combo Box (Dropdown)
