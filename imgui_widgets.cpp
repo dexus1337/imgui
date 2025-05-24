@@ -1770,6 +1770,15 @@ void ImGui::Separator()
     SeparatorEx(flags, 1.0f);
 }
 
+void ImGui::Splitter(const char* name, bool split_vertically, float thickness, float* size)
+{
+    ImGui::SameLine();
+    ImGui::Button(name, ImVec2(split_vertically ? ImGui::GetContentRegionAvail().x : thickness, split_vertically ? thickness : ImGui::GetContentRegionAvail().y));
+    if (ImGui::IsItemActive())
+        *size += split_vertically ? ImGui::GetIO().MouseDelta.y : ImGui::GetIO().MouseDelta.x;
+    ImGui::SameLine();
+}
+
 void ImGui::SeparatorTextEx(ImGuiID id, const char* label, const char* label_end, float extra_w)
 {
     ImGuiContext& g = *GImGui;
