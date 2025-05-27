@@ -1849,10 +1849,12 @@ enum ImGuiSliderFlags_
 // Those values are guaranteed to be stable and we frequently use 0/1 directly. Named enums provided for convenience.
 enum ImGuiMouseButton_
 {
-    ImGuiMouseButton_Left = 0,
-    ImGuiMouseButton_Right = 1,
-    ImGuiMouseButton_Middle = 2,
-    ImGuiMouseButton_COUNT = 5
+    ImGuiMouseButton_Left       = 0,
+    ImGuiMouseButton_Right      = 1,
+    ImGuiMouseButton_Middle     = 2,
+    ImGuiMouseButton_X1         = 3,
+    ImGuiMouseButton_X2         = 4,
+    ImGuiMouseButton_COUNT      = 5
 };
 
 // Enumeration for GetMouseCursor()
