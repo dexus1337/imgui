@@ -3978,6 +3978,12 @@ bool ImGui::InputInt4(const char* label, int v[4], ImGuiInputTextFlags flags)
     return InputScalarN(label, ImGuiDataType_S32, v, 4, NULL, NULL, "%d", flags);
 }
 
+bool ImGui::InputByte(const char* label, unsigned char* v, unsigned char step, unsigned char step_fast, ImGuiInputTextFlags flags)
+{
+    const char* format = (flags & ImGuiInputTextFlags_CharsHexadecimal) ? "%01X" : "%d";
+    return InputScalar(label, ImGuiDataType_U8, (void*)v, (void*)(step > 0 ? &step : NULL), (void*)(step_fast > 0 ? &step_fast : NULL), format, flags);
+}
+
 bool ImGui::InputDouble(const char* label, double* v, double step, double step_fast, const char* format, ImGuiInputTextFlags flags)
 {
     return InputScalar(label, ImGuiDataType_Double, (void*)v, (void*)(step > 0.0 ? &step : NULL), (void*)(step_fast > 0.0 ? &step_fast : NULL), format, flags);
