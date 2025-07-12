@@ -4,6 +4,7 @@
 #include <X11/Xlib.h>
 #include <X11/keysym.h>
 #include <X11/cursorfont.h>
+#include <time.h>
 #if not defined IMGUI_IMPL_X11_NO_XFIXES
 #include <X11/extensions/Xfixes.h>
 #endif
@@ -15,150 +16,197 @@ struct ImGui_ImplX11_Data
     Display*                    display;
 	Window                      window;
     ImGuiMouseCursor            last_cursor;
+    XIM                         xim;
+    XIC                         xic;
+    double                      time;
 	
     ImGui_ImplX11_Data()		{ ::memset((void*)this, 0, sizeof(*this)); }
 };
 
-static ImGui_ImplX11_Data* ImGui_ImplX11_GetBackendData()
+static ImGui_ImplX11_Data* ImGui_ImplX11_GetBackendData( )
 {
-    return ImGui::GetCurrentContext() ? (ImGui_ImplX11_Data*)ImGui::GetIO().BackendPlatformUserData : nullptr;
+    return ImGui::GetCurrentContext( ) ? reinterpret_cast< ImGui_ImplX11_Data* >( ImGui::GetIO( ).BackendPlatformUserData ) : nullptr;
 }
 
-static ImGuiKey ImGui_ImplX11_KeyCode_to_ImKey(int key)
+static ImGuiKey ImGui_ImplX11_KeyCode_to_ImKey( KeySym key )
 {
     switch( key )
     {
-        case 67:    return ImGuiKey_F1;
-        case 68:    return ImGuiKey_F2;
-        case 69:    return ImGuiKey_F3;
-        case 70:    return ImGuiKey_F4;
-        case 71:    return ImGuiKey_F5;
-        case 72:    return ImGuiKey_F6;
-        case 73:    return ImGuiKey_F7;
-        case 74:    return ImGuiKey_F8;
-        case 75:    return ImGuiKey_F9;
-        case 76:    return ImGuiKey_F10;
-        case 95:    return ImGuiKey_F11;
-        case 96:    return ImGuiKey_F12;
+        // Letters
+        case XK_a: return ImGuiKey_A;
+        case XK_b: return ImGuiKey_B;
+        case XK_c: return ImGuiKey_C;
+        case XK_d: return ImGuiKey_D;
+        case XK_e: return ImGuiKey_E;
+        case XK_f: return ImGuiKey_F;
+        case XK_g: return ImGuiKey_G;
+        case XK_h: return ImGuiKey_H;
+        case XK_i: return ImGuiKey_I;
+        case XK_j: return ImGuiKey_J;
+        case XK_k: return ImGuiKey_K;
+        case XK_l: return ImGuiKey_L;
+        case XK_m: return ImGuiKey_M;
+        case XK_n: return ImGuiKey_N;
+        case XK_o: return ImGuiKey_O;
+        case XK_p: return ImGuiKey_P;
+        case XK_q: return ImGuiKey_Q;
+        case XK_r: return ImGuiKey_R;
+        case XK_s: return ImGuiKey_S;
+        case XK_t: return ImGuiKey_T;
+        case XK_u: return ImGuiKey_U;
+        case XK_v: return ImGuiKey_V;
+        case XK_w: return ImGuiKey_W;
+        case XK_x: return ImGuiKey_X;
+        case XK_y: return ImGuiKey_Y;
+        case XK_z: return ImGuiKey_Z;
 
-        case 10:    return ImGuiKey_1;
-        case 11:    return ImGuiKey_2;
-        case 12:    return ImGuiKey_3;
-        case 13:    return ImGuiKey_4;
-        case 14:    return ImGuiKey_5;
-        case 15:    return ImGuiKey_6;
-        case 16:    return ImGuiKey_7;
-        case 17:    return ImGuiKey_8;
-        case 18:    return ImGuiKey_9;
-        case 19:    return ImGuiKey_0;
-        case 20:    return ImGuiKey_Minus;
-        case 21:    return ImGuiKey_Equal;
-        case 22:    return ImGuiKey_Backspace;
+        // Digits
+        case XK_0: return ImGuiKey_0;
+        case XK_1: return ImGuiKey_1;
+        case XK_2: return ImGuiKey_2;
+        case XK_3: return ImGuiKey_3;
+        case XK_4: return ImGuiKey_4;
+        case XK_5: return ImGuiKey_5;
+        case XK_6: return ImGuiKey_6;
+        case XK_7: return ImGuiKey_7;
+        case XK_8: return ImGuiKey_8;
+        case XK_9: return ImGuiKey_9;
 
-        case 24:    return ImGuiKey_Q;
-        case 25:    return ImGuiKey_W;
-        case 26:    return ImGuiKey_E;
-        case 27:    return ImGuiKey_R;
-        case 28:    return ImGuiKey_T;
-        case 29:    return ImGuiKey_Y;
-        case 30:    return ImGuiKey_U;
-        case 31:    return ImGuiKey_I;
-        case 32:    return ImGuiKey_O;
-        case 33:    return ImGuiKey_P;
-        case 34:    return ImGuiKey_LeftBracket;
-        case 35:    return ImGuiKey_RightBracket;
-        //case 35:    return ImGuiKey_Bar;
+        // Function keys
+        case XK_F1:  return ImGuiKey_F1;
+        case XK_F2:  return ImGuiKey_F2;
+        case XK_F3:  return ImGuiKey_F3;
+        case XK_F4:  return ImGuiKey_F4;
+        case XK_F5:  return ImGuiKey_F5;
+        case XK_F6:  return ImGuiKey_F6;
+        case XK_F7:  return ImGuiKey_F7;
+        case XK_F8:  return ImGuiKey_F8;
+        case XK_F9:  return ImGuiKey_F9;
+        case XK_F10: return ImGuiKey_F10;
+        case XK_F11: return ImGuiKey_F11;
+        case XK_F12: return ImGuiKey_F12;
 
-        case 36:    return ImGuiKey_Enter;
+        // Arrow keys
+        case XK_Left:  return ImGuiKey_LeftArrow;
+        case XK_Right: return ImGuiKey_RightArrow;
+        case XK_Up:    return ImGuiKey_UpArrow;
+        case XK_Down:  return ImGuiKey_DownArrow;
 
-        case 38:    return ImGuiKey_A;
-        case 39:    return ImGuiKey_S;
-        case 40:    return ImGuiKey_D;
-        case 41:    return ImGuiKey_F;
-        case 42:    return ImGuiKey_G;
-        case 43:    return ImGuiKey_H;
-        case 44:    return ImGuiKey_J;
-        case 45:    return ImGuiKey_K;
-        case 46:    return ImGuiKey_L;
+        // Navigation/editing
+        case XK_Home:     return ImGuiKey_Home;
+        case XK_End:      return ImGuiKey_End;
+        case XK_Insert:   return ImGuiKey_Insert;
+        case XK_Delete:   return ImGuiKey_Delete;
+        case XK_Page_Up:  return ImGuiKey_PageUp;
+        case XK_Page_Down:return ImGuiKey_PageDown;
+        case XK_BackSpace:return ImGuiKey_Backspace;
+        case XK_Return:   return ImGuiKey_Enter;
+        case XK_Escape:   return ImGuiKey_Escape;
+        case XK_Tab:      return ImGuiKey_Tab;
+        case XK_space:    return ImGuiKey_Space;
+        case XK_KP_Enter: return ImGuiKey_KeypadEnter;
 
-        case 118:   return ImGuiKey_Insert;
-        case 110:   return ImGuiKey_Home;
-        case 112:   return ImGuiKey_PageUp;
-        case 119:   return ImGuiKey_Delete;
-        case 115:   return ImGuiKey_End;
-        case 117:   return ImGuiKey_PageDown;
+        // Modifiers
+        case XK_Shift_L:    return ImGuiKey_LeftShift;
+        case XK_Shift_R:    return ImGuiKey_RightShift;
+        case XK_Control_L:  return ImGuiKey_LeftCtrl;
+        case XK_Control_R:  return ImGuiKey_RightCtrl;
+        case XK_Alt_L:      return ImGuiKey_LeftAlt;
+        case XK_Alt_R:      return ImGuiKey_RightAlt;
+        case XK_Meta_L:     return ImGuiKey_LeftSuper;
+        case XK_Meta_R:     return ImGuiKey_RightSuper;
 
-        case 1337:  return ImGuiKey_PrintScreen;
-        case 78:    return ImGuiKey_ScrollLock;
-        case 127:   return ImGuiKey_Pause;
+        // Numpad keys
+        case XK_KP_0: return ImGuiKey_Keypad0;
+        case XK_KP_1: return ImGuiKey_Keypad1;
+        case XK_KP_2: return ImGuiKey_Keypad2;
+        case XK_KP_3: return ImGuiKey_Keypad3;
+        case XK_KP_4: return ImGuiKey_Keypad4;
+        case XK_KP_5: return ImGuiKey_Keypad5;
+        case XK_KP_6: return ImGuiKey_Keypad6;
+        case XK_KP_7: return ImGuiKey_Keypad7;
+        case XK_KP_8: return ImGuiKey_Keypad8;
+        case XK_KP_9: return ImGuiKey_Keypad9;
+        case XK_KP_Add:       return ImGuiKey_KeypadAdd;
+        case XK_KP_Subtract:  return ImGuiKey_KeypadSubtract;
+        case XK_KP_Multiply:  return ImGuiKey_KeypadMultiply;
+        case XK_KP_Divide:    return ImGuiKey_KeypadDivide;
+        case XK_KP_Decimal:   return ImGuiKey_KeypadDecimal;
 
-        case 113:   return ImGuiKey_LeftArrow;
-        case 116:   return ImGuiKey_DownArrow;
-        case 114:   return ImGuiKey_RightArrow;
-        case 111:   return ImGuiKey_UpArrow;
-
-        case 50:    return ImGuiKey_LeftShift;
-        case 62:    return ImGuiKey_RightShift;
-
-        case 37:    return ImGuiKey_LeftSuper;
-        //case 62:    return ImGuiKey_RightSuper;
-
-        case 64:    return ImGuiKey_LeftAlt;
-        case 65:    return ImGuiKey_Space;
-        case 108:   return ImGuiKey_RightAlt;
-
-        case 66:    return ImGuiKey_CapsLock;
-        case 23:    return ImGuiKey_Tab;
-
-        case 9:     return ImGuiKey_Escape;
+        // Symbols
+        case XK_equal:      return ImGuiKey_Equal;
+        case XK_minus:      return ImGuiKey_Minus;
+        case XK_grave:      return ImGuiKey_GraveAccent;
+        case XK_apostrophe: return ImGuiKey_Apostrophe;
+        case XK_semicolon:  return ImGuiKey_Semicolon;
+        case XK_comma:      return ImGuiKey_Comma;
+        case XK_period:     return ImGuiKey_Period;
+        case XK_slash:      return ImGuiKey_Slash;
+        case XK_backslash:  return ImGuiKey_Backslash;
+        case XK_bracketleft: return ImGuiKey_LeftBracket;
+        case XK_bracketright:return ImGuiKey_RightBracket;
 
         default:
             return ImGuiKey_None;
     }
 }
 
-IMGUI_IMPL_API void ImGui_ImplX11_KeyEvent( int native_keycode, bool down )
+IMGUI_IMPL_API void ImGui_ImplX11_KeyEvent( XEvent* p_event, bool down )
 {
     ImGuiIO& io     = ImGui::GetIO( );
-    ImGuiKey key    = ImGui_ImplX11_KeyCode_to_ImKey( native_keycode );
-
-    io.AddKeyEvent( key, down );
-    io.SetKeyEventNativeData( key, native_keycode, 0 ); // To support legacy indexing (<1.87 user code)
+    KeySym keysym   = XLookupKeysym( reinterpret_cast< XKeyEvent* >( p_event ), 0 );
+    ImGuiKey key    = ImGui_ImplX11_KeyCode_to_ImKey( keysym );
+    
+    if ( key != ImGuiKey_None )
+    {
+        io.AddKeyEvent( key, down );
+        io.SetKeyEventNativeData( key, p_event->xkey.keycode, down ); // To support legacy indexing (<1.87 user code)
+    }
 
     if ( down )
     {
-        ImGui_ImplX11_Data* bd = ImGui_ImplX11_GetBackendData( );
+        ImGui_ImplX11_Data* bd          = ImGui_ImplX11_GetBackendData( );
+        XKeyPressedEvent* pressed_event = reinterpret_cast< XKeyPressedEvent* >( p_event );
 
-        char test = XKeycodeToKeysym( bd->display, native_keycode, 0 );
+        char buf[ 64 ] = { };
+        KeySym keysym;
+        Status status;
+        
+        int len = Xutf8LookupString( bd->xic, pressed_event, buf, sizeof( buf ), &keysym, &status );
 
-        //printf( "io: %d -> %c\n", test, test );
-
-        if( test > 0 )
-            io.AddInputCharacter( test );
+        if ( status == XLookupChars || status == XLookupBoth )
+            io.AddInputCharactersUTF8( buf );
     }
 }
 
-IMGUI_IMPL_API void ImGui_ImplX11_MouseEvent( int native_buttoncode, bool down )
+IMGUI_IMPL_API void ImGui_ImplX11_MouseEvent( XEvent* p_event, bool down )
 {
     ImGuiIO& io             = ImGui::GetIO();
     ImGuiMouseButton curbtn = 0;
     int mode                = 0;
-    float wheel             = 0.f;
+    float wheelx            = 0.f;
+    float wheely            = 0.f;
 
-    switch( native_buttoncode )
+    switch( p_event->xbutton.button )
     {
         case 1:   mode = 1;  curbtn = ImGuiMouseButton_Left;    break;
         case 2:   mode = 1;  curbtn = ImGuiMouseButton_Middle;  break;
         case 3:   mode = 1;  curbtn = ImGuiMouseButton_Right;   break;
-        case 4:   mode = 2;  wheel  = 1.f;                      break;
-        case 5:   mode = 2;  wheel  = -1.f;                     break;
+        case 4:   mode = 2;  wheely  = 1.f;                     break;
+        case 5:   mode = 2;  wheely  = -1.f;                    break;
+        case 6:   mode = 2;  wheelx  = 1.f;                     break;
+        case 7:   mode = 2;  wheelx  = -1.f;                    break;
+        case 8:   mode = 1;  curbtn = ImGuiMouseButton_X1;      break;
+        case 9:   mode = 1;  curbtn = ImGuiMouseButton_X2;      break;
         default:  return;
     }
-
-    if( mode = 1 )
-        io.AddMouseButtonEvent( curbtn, down );
-    else if( mode = 2 )
-        io.AddMouseWheelEvent( 0.f, wheel );
+    
+    switch ( mode ) 
+    {
+        case 1:   io.AddMouseButtonEvent( curbtn, down );   break;
+        case 2:   io.AddMouseWheelEvent( wheelx, wheely );  break;
+        default:  return;
+    }
 }
 
 IMGUI_IMPL_API bool ImGui_ImplX11_OnEvent(void* event)
@@ -173,16 +221,16 @@ IMGUI_IMPL_API bool ImGui_ImplX11_OnEvent(void* event)
     switch( evt->type )
     {
         case KeyPress:
-            ImGui_ImplX11_KeyEvent( evt->xkey.keycode, true );
+            ImGui_ImplX11_KeyEvent( evt, true );
             break;
         case KeyRelease:
-            ImGui_ImplX11_KeyEvent( evt->xkey.keycode, false );
+            ImGui_ImplX11_KeyEvent( evt, false );
             break;
         case ButtonPress:
-            ImGui_ImplX11_MouseEvent( evt->xbutton.button, true );
+            ImGui_ImplX11_MouseEvent( evt, true );
             break;
         case ButtonRelease:
-            ImGui_ImplX11_MouseEvent( evt->xbutton.button, false );
+            ImGui_ImplX11_MouseEvent( evt, false );
             break;
         /*case MotionNotify:
             io.AddMousePosEvent( static_cast< float >( evt->xmotion.x ), static_cast< float >( evt->xmotion.y ) );
@@ -242,7 +290,24 @@ IMGUI_IMPL_API bool ImGui_ImplX11_Init(void* display, int window)
 
     bd->display = reinterpret_cast< Display* >(display);
     bd->window  = static_cast< Window >(window);
+    
+    bd->xim = XOpenIM(bd->display, NULL, NULL, NULL);
 
+    bd->time = 0.0;
+    
+    IM_ASSERT( bd->xim != nullptr && "XOpenIM seems to have failed!" );
+    
+    bd->xic = XCreateIC
+    (
+        bd->xim,
+        XNInputStyle, XIMPreeditNothing | XIMStatusNothing,
+        XNClientWindow, bd->window,
+        XNFocusWindow, bd->window,
+        nullptr
+    );
+
+    IM_ASSERT( bd->xic != nullptr && "XCreateIC seems to have failed!" );
+    
     io.BackendPlatformUserData = (void*)bd;
     io.BackendPlatformName = "imgui_impl_x11";
     io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors; 
@@ -255,6 +320,18 @@ IMGUI_IMPL_API void ImGui_ImplX11_Shutdown()
 	ImGui_ImplX11_Data* bd = ImGui_ImplX11_GetBackendData();
     IM_ASSERT(bd != nullptr && "No platform backend to shutdown, or already shutdown?");
     ImGuiIO& io = ImGui::GetIO();
+      
+    if ( bd->xic )
+    {
+        XDestroyIC( bd->xic );
+        bd->xic = nullptr;
+    }
+
+    if ( bd->xim )
+    {
+        XCloseIM( bd->xim );
+        bd->xim = nullptr;
+    }
 
     io.BackendPlatformName = nullptr;
     io.BackendPlatformUserData = nullptr;
@@ -267,6 +344,13 @@ IMGUI_IMPL_API void ImGui_ImplX11_NewFrame()
 	ImGuiIO& io = ImGui::GetIO();
     ImGui_ImplX11_Data* bd = ImGui_ImplX11_GetBackendData();
     IM_ASSERT(bd != nullptr && "Did you call ImGui_ImplWin32_Init()?");
+
+    // Setup time step
+    timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    double now = ts.tv_sec + ts.tv_nsec / 1e9;
+    io.DeltaTime = (float)(now - bd->time);
+    bd->time = now;
 
     XWindowAttributes attr ={};
     XGetWindowAttributes(bd->display, bd->window, &attr);
