@@ -431,14 +431,14 @@ void ImGui::LabelAligned(const char* label, const ImVec2& align)
     auto startposx = (space.x * align.x) - (label_size.x * align.x);
     auto startposy = (space.y * align.y) - (label_size.y * align.y);
 
-    float xaddy = align.x > 0.f ? 0.f : style.ItemInnerSpacing.x;
-    float yaddy = align.y > 0.f ? 0.f : style.FramePadding.y * 2;
+    float xaddy = 0.f; // align.x > 0.f ? 0.f : style.ItemInnerSpacing.x;
+    float yaddy = 0.f; // align.y > 0.f ? 0.f : style.FramePadding.y;
 
     const ImVec2 itempos = window->DC.CursorPos;
 
-    const ImRect total_bb(itempos, itempos + ImVec2(startposx + xaddy + label_size.x, startposy + yaddy + label_size.y));
+    const ImRect total_bb(itempos, itempos + ImVec2(startposx + xaddy + label_size.x, startposy + yaddy + label_size.y + style.FramePadding.y * 2.f));
 
-    ItemSize(total_bb, style.FramePadding.y);
+    ItemSize(total_bb);
     if (!ItemAdd(total_bb, 0))
         return;
 
@@ -1196,14 +1196,14 @@ void ImGui::ImageWithBg(ImTextureID user_texture_id, const ImVec2& image_size, c
 // - 'uv0' and 'uv1' are texture coordinates. Read about them from the same link above.
 void ImGui::ImageAlignedWithBg(ImTextureID user_texture_id, const ImVec2& image_size, const ImVec2& align, const ImVec2& uv0, const ImVec2& uv1, const ImVec4& tint_col, const ImVec4& border_col)
 {
-    auto windowWidth = ImGui::GetWindowSize().x;
-    auto windowHeight = ImGui::GetWindowSize().y;
+    auto windowWidth = ImGui::GetWindowSize().x - ImGui::GetCursorPosX();
+    auto windowHeight = ImGui::GetWindowSize().y - ImGui::GetCursorPosY();
 
     if (align.x)
-        ImGui::SetCursorPosX((windowWidth * align.x) - (image_size.x * align.x));
+        ImGui::SetCursorPosX(ImGui::GetCursorPosX() + (windowWidth * align.x) - (image_size.x * align.x));
 
     if (align.y)
-        ImGui::SetCursorPosY((windowHeight * align.y) - (image_size.y * align.y));
+        ImGui::SetCursorPosY(ImGui::GetCursorPosY() + (windowHeight * align.y) - (image_size.y * align.y));
 
     ImGuiWindow* window = GetCurrentWindow();
     if (window->SkipItems)
